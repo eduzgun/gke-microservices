@@ -1,4 +1,4 @@
-package controllers
+package philosopher
 
 type philosopherControllerImpl struct {
 }
@@ -6,6 +6,6 @@ type philosopherControllerImpl struct {
 type PhilosopherController interface {
 }
 
-func (pc *philosopherControllerImpl) GetPhilosophers() {
+func (pc *philosopherControllerImpl) HandleGetPhilosophers() {
 
 }
