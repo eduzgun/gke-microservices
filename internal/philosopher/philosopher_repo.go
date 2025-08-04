@@ -6,6 +6,6 @@ type philosopherRepoImpl struct {
 type PhilosopherRepo interface {
 }
 
-func (pc *philosopherRepoImpl) GetPhilosophers() {
+func (pr *philosopherRepoImpl) GetPhilosophers() {
 
 }
