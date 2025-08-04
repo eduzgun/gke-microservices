@@ -6,13 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-redis/redis"
+	"log/slog"
+
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rs/zerolog/log"
 )
 
 type PostgresDB struct {
-	Pool *pgxpool.Pool
+	Pool   *pgxpool.Pool
+	logger *slog.Logger
 }
 
 type DBConfig struct {
@@ -24,95 +25,65 @@ type DBConfig struct {
 	SSLMode  string
 }
 
-func NewPostgresDB() (*PostgresDB, error) {
-	// Get configuration from environment or use defaults
-	dbConfig := DBConfig{
-		Host:     os.Getenv("PSQL_HOST"),
-		Port:     "5432", // Default PostgreSQL port
-		User:     os.Getenv("PSQL_USER"),
-		Password: os.Getenv("PSQL_PASSWORD"),
-		DBName:   os.Getenv("PSQL_NAME"),
-		SSLMode:  "disable",
-	}
+func NewPostgresDB(logger *slog.Logger) (*PostgresDB, error) {
+	cfg := loadConfig()
 
-	// Build connection string
-	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		dbConfig.Host,
-		dbConfig.Port,
-		dbConfig.User,
-		dbConfig.Password,
-		dbConfig.DBName,
-		dbConfig.SSLMode)
+	connString := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+	)
 
 	var pool *pgxpool.Pool
 	var err error
 
 	// Retry logic
 	maxAttempts := 10
-	for i := range maxAttempts {
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		pool, err = pgxpool.New(context.Background(), connString)
 		if err == nil {
 			err = pool.Ping(context.Background())
 			if err == nil {
-				log.Info().Msg("established connection to postgres db")
-				return &PostgresDB{Pool: pool}, nil
+				logger.Info(
+					"connected to postgres",
+					"host", cfg.Host,
+					"port", cfg.Port,
+					"dbname", cfg.DBName,
+					"attempt", attempt,
+				)
+				return &PostgresDB{Pool: pool, logger: logger}, nil
 			}
 		}
-		log.Warn().Err(err).Msgf("Failed to connect to database, retrying in 5 seconds... (%d/%d)", i+1, maxAttempts)
-		time.Sleep(5 * time.Second)
+
+		logger.Error(
+			"failed to connect to postgres",
+			"attempt", attempt,
+			"max_attempts", maxAttempts,
+			"host", cfg.Host,
+			"port", cfg.Port,
+			"error", err,
+		)
+
+		if attempt < maxAttempts {
+			time.Sleep(5 * time.Second)
+		}
 	}
 
 	return nil, fmt.Errorf("failed to connect to database after %d attempts: %w", maxAttempts, err)
 }
 
+// Gracefully close connection pool
 func (p *PostgresDB) Close() {
+	p.logger.Info("closing postgres connection pool")
 	p.Pool.Close()
 }
 
-type RedisDB struct {
-	Client *redis.Client
-}
-
-func NewRedisDB() (*RedisDB, error) {
-	// Redis configuration
-	redisConfig := &redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
-		Password: os.Getenv("REDIS_PASSW"),
-		DB:       0, // Use default DB
-	}
-
-	var client *redis.Client
-	var err error
-
-	// Retry logic
-	maxAttempts := 10
-	for i := range maxAttempts {
-		client = redis.NewClient(redisConfig)
-
-		// Ping Redis to verify connection
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		_, err = client.Ping(ctx).Result()
-		cancel()
-
-		if err == nil {
-			log.Info().Msg("established connection to Redis")
-			return &RedisDB{Client: client}, nil
-		}
-
-		log.Warn().Err(err).Msgf("Failed to connect to Redis, retrying in 5 seconds... (%d/%d)", i+1, maxAttempts)
-		time.Sleep(5 * time.Second)
-
-		// Clean up the failed client
-		if client != nil {
-			_ = client.Close()
-		}
-	}
-
-	return nil, fmt.Errorf("failed to connect to Redis after %d attempts: %w", maxAttempts, err)
-}
-
-func (r *RedisDB) Close() {
-	if r.Client != nil {
-		r.Client.Close()
+func loadConfig() DBConfig {
+	return DBConfig{
+		Host:     os.Getenv("PSQL_HOST"),
+		Port:     os.Getenv("PSQL_PORT"),
+		User:     os.Getenv("PSQL_USER"),
+		Password: os.Getenv("PSQL_PASSWORD"),
+		DBName:   os.Getenv("PSQL_NAME"),
+		SSLMode:  os.Getenv("PSQL_SSL_MODE"),
 	}
 }

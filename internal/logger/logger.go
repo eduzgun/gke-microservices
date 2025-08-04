@@ -20,3 +20,16 @@ func NewDevLogger() *slog.Logger {
 		Level: slog.LevelDebug,
 	}))
 }
+
+// Example logs
+// slog.Info("User login successful",
+//     slog.String("user_id", "123"),
+//     slog.Int("status", 200),
+//     slog.Bool("admin", true),
+//     slog.Float64("duration_ms", 12.34),
+//     slog.Time("login_time", time.Now()),
+//     slog.Group("request",
+//         slog.String("method", "POST"),
+//         slog.String("path", "/login"),
+//     ),
+// )
