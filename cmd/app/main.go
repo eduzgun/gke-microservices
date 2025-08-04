@@ -25,11 +25,12 @@ func main() {
 	}
 
 	// Load postgres environment
-	pool, err := db.NewPostgresDB()
+	db, err := db.NewPostgresDB(log)
 	if err != nil {
 		log.Error("database initialisation failed")
+		os.Exit(1)
 	}
-	defer pool.Close()
+	defer db.Close()
 
 	fmt.Println("The app has begun")
 }

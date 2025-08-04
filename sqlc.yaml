@@ -1,0 +1,14 @@
+# sqlc.yaml
+version: "2"
+sql:
+  - schema: "internal/db/migrations"
+    queries: "internal/db/queries"
+    engine: "postgresql"
+    gen:
+      go:
+        sql_driver: "github.com/jackc/pgx/v5"
+        sql_package: "pgx/v5"
+        package: "db"
+        out: "internal/db"
+        emit_json_tags: true
+        emit_interface: true
