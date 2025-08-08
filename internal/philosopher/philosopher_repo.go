@@ -14,6 +14,13 @@ type philosopherRepoImpl struct {
 }
 
 type PhilosopherRepo interface {
+	GetPhilosophers(ctx context.Context) ([]models.Philosopher, error)
+}
+
+func NewPhilosopherRepo(queries db.Querier) PhilosopherRepo {
+	return &philosopherRepoImpl{
+		queries: queries,
+	}
 }
 
 func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Philosopher, error) {
