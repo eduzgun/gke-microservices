@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/eduzgun/gke-microservices/internal/philosopher"
 )
@@ -29,5 +30,52 @@ func (r *Router) RegisterPhilosopherRoutes(controller philosopher.PhilosopherCon
 
 // ServeHTTP implements http.Handler
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.mux.ServeHTTP(w, req)
+	// Apply CORS middleware to all requests
+	corsMiddleware(r.mux).ServeHTTP(w, req)
+}
+
+// getCORSOrigins returns allowed origins based on environment
+func getCORSOrigins() []string {
+	env := os.Getenv("ENVIRONMENT")
+
+	switch env {
+	case "prod":
+		return []string{
+			"https://deployedapp",
+		}
+	default:
+		return []string{
+			"http://localhost:3000",
+			"http://localhost:5173", // Vite
+			"http://localhost:4173",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:5173",
+		}
+	}
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	allowedOrigins := getCORSOrigins()
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		for _, allowed := range allowedOrigins {
+			if origin == allowed {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				break
+			}
+		}
+
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
