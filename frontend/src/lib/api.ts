@@ -1,16 +1,17 @@
 import type { Philosopher } from "./types"
+import { PUBLIC_GO_API_BASE } from '$env/static/public';
 
-
-const API_BASE = import.meta.env.GO_API_BASE || '';
+const API_BASE = import.meta.env.PUBLIC_GO_API_BASE || 'http://localhost:8080';
+console.log('API_BASE:', API_BASE);
 
 const PATHS = {
   philosophers: '/philosophers',
 };
 
 export const loadPhilosophers = async (): Promise<Philosopher[]> => {
-  const url = `${API_BASE}${PATHS.philosophers}`;
+  const url = `http://localhost:8080/philosophers`;
 
-  try {
+  try { 
     const res = await fetch(url);
 
     // Check HTTP response
@@ -20,6 +21,7 @@ export const loadPhilosophers = async (): Promise<Philosopher[]> => {
     }
 
     const data = await res.json();
+    console.log('Received data:', data);
     return data as Philosopher[];
 
   } catch (error) {

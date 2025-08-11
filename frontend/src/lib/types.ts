@@ -1,7 +1,11 @@
 export type Philosopher = {
   id: number;
   name: string;
-  birth_year: number | null;
-  death_year: number | null;
+  date_born: string;
+  date_died: string;
+  birthplace: string;
+  interests: string[];
+  portrait_uri: string;
   bio: string;
+  created_at: string;  // time.Time → serialized as ISO string
 };
