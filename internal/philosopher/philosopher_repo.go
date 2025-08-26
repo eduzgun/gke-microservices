@@ -15,6 +15,8 @@ type philosopherRepoImpl struct {
 
 type PhilosopherRepo interface {
 	GetPhilosophers(ctx context.Context) ([]models.Philosopher, error)
+	CreatePhilosopher(ctx context.Context, philosopher models.Philosopher) (int, error)
+	GetPhilosopher(ctx context.Context, id int32) (models.Philosopher, error)
 }
 
 func NewPhilosopherRepo(queries db.Querier) PhilosopherRepo {
@@ -51,10 +53,56 @@ func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Ph
 	return philosophers, nil
 }
 
+func (pr *philosopherRepoImpl) CreatePhilosopher(ctx context.Context, phil models.Philosopher) (int, error) {
+	params := db.CreatePhilosopherParams{
+		Name:        phil.Name,
+		DateBorn:    stringToPgText(phil.DateBorn),
+		DateDied:    stringToPgText(phil.DateDied),
+		Birthplace:  stringToPgText(phil.Birthplace),
+		Interests:   phil.Interests,
+		PortraitUri: stringToPgText(phil.PortraitURI),
+		Bio:         stringToPgText(phil.Bio),
+	}
+
+	id, err := pr.queries.CreatePhilosopher(ctx, params)
+	if err != nil {
+		return 0, fmt.Errorf("creating philosopher: %w", err)
+	}
+
+	return int(id), nil
+}
+
+func (pr *philosopherRepoImpl) GetPhilosopher(ctx context.Context, id int32) (models.Philosopher, error) {
+	dbPhilo, err := pr.queries.GetPhilosopher(ctx, id)
+	if err != nil {
+		return models.Philosopher{}, err
+	}
+
+	return models.Philosopher{
+		ID:          int(dbPhilo.ID),
+		Name:        dbPhilo.Name,
+		DateBorn:    pgTextToString(dbPhilo.DateBorn),
+		DateDied:    pgTextToString(dbPhilo.DateDied),
+		Birthplace:  pgTextToString(dbPhilo.Birthplace),
+		Interests:   dbPhilo.Interests,
+		PortraitURI: pgTextToString(dbPhilo.PortraitUri),
+		Bio:         pgTextToString(dbPhilo.Bio),
+		CreatedAt:   dbPhilo.CreatedAt.Time,
+	}, nil
+}
+
 // Helper to convert pgtype.Text to string
 func pgTextToString(t pgtype.Text) string {
 	if t.Valid {
 		return t.String
 	}
 	return ""
+}
+
+// Helper: Convert string to pgtype.Text
+func stringToPgText(s string) pgtype.Text {
+	if s == "" {
+		return pgtype.Text{Valid: false}
+	}
+	return pgtype.Text{String: s, Valid: true}
 }

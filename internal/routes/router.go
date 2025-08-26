@@ -26,6 +26,8 @@ func NewRouter() *Router {
 
 func (r *Router) RegisterPhilosopherRoutes(controller philosopher.PhilosopherController) {
 	r.mux.HandleFunc("GET /philosophers", controller.HandleGetPhilosophers)
+	r.mux.HandleFunc("GET /philosophers/{id}", controller.HandleGetPhilosopher)
+	r.mux.HandleFunc("POST /philosophers", controller.HandleCreatePhilosopher)
 }
 
 // ServeHTTP implements http.Handler
