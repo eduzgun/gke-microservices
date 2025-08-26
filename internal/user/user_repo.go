@@ -7,7 +7,6 @@ import (
 
 	"github.com/eduzgun/gke-microservices/internal/db"
 	"github.com/eduzgun/gke-microservices/internal/models"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type userRepoImpl struct {
@@ -15,7 +14,7 @@ type userRepoImpl struct {
 }
 
 type UserRepo interface {
-	GetUser(ctx context.Context, id int32) (models.User, error)
+	GetUser(ctx context.Context, id int) (models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	CreateUser(ctx context.Context, user models.User) (int, error)
 }
@@ -24,8 +23,8 @@ func NewUserRepo(queries db.Querier) UserRepo {
 	return &userRepoImpl{queries: queries}
 }
 
-func (r *userRepoImpl) GetUser(ctx context.Context, id int32) (models.User, error) {
-	dbUser, err := r.queries.GetUser(ctx, id)
+func (r *userRepoImpl) GetUser(ctx context.Context, id int) (models.User, error) {
+	dbUser, err := r.queries.GetUser(ctx, int32(id))
 	if err != nil {
 		return models.User{}, fmt.Errorf("querier: getting user: %w", err)
 	}
@@ -34,7 +33,7 @@ func (r *userRepoImpl) GetUser(ctx context.Context, id int32) (models.User, erro
 		ID:       int(dbUser.ID),
 		Username: dbUser.Username,
 		Email:    dbUser.Email,
-		Password: pgTextToString(dbUser.Password),
+		Password: dbUser.Password,
 	}, nil
 }
 
@@ -48,7 +47,7 @@ func (r *userRepoImpl) GetUserByEmail(ctx context.Context, email string) (models
 		ID:       int(dbUser.ID),
 		Username: dbUser.Username,
 		Email:    dbUser.Email,
-		Password: pgTextToString(dbUser.Password),
+		Password: dbUser.Password,
 	}, nil
 }
 
@@ -56,7 +55,7 @@ func (r *userRepoImpl) CreateUser(ctx context.Context, user models.User) (int, e
 	params := db.CreateUserParams{
 		Username: user.Username,
 		Email:    user.Email,
-		Password: stringToPgText(user.Password),
+		Password: user.Password,
 	}
 
 	id, err := r.queries.CreateUser(ctx, params)
@@ -65,20 +64,4 @@ func (r *userRepoImpl) CreateUser(ctx context.Context, user models.User) (int, e
 	}
 
 	return int(id), nil
-}
-
-// Helper: pgtype.Text → string
-func pgTextToString(t pgtype.Text) string {
-	if t.Valid {
-		return t.String
-	}
-	return ""
-}
-
-// Helper: string → pgtype.Text
-func stringToPgText(s string) pgtype.Text {
-	if s == "" {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: s, Valid: true}
 }

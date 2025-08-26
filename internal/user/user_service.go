@@ -26,7 +26,7 @@ func NewUserService(repo UserRepo) UserService {
 }
 
 func (s *userServiceImpl) GetUser(ctx context.Context, id int) (*models.User, error) {
-	user, err := s.repo.GetUser(ctx, int32(id))
+	user, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("getting user by id: %w", err)
 	}

@@ -9,11 +9,17 @@ import (
 )
 
 type Querier interface {
+	CountLikesByPhilosopher(ctx context.Context, philosopherID int32) (int64, error)
+	CreateInteraction(ctx context.Context, arg CreateInteractionParams) error
 	CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (int32, error)
+	DeleteInteraction(ctx context.Context, id int32) error
+	GetInteractionsByPhilosopher(ctx context.Context, philosopherID int32) ([]GetInteractionsByPhilosopherRow, error)
 	GetPhilosopher(ctx context.Context, id int32) (Philosopher, error)
 	GetUser(ctx context.Context, id int32) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserInteraction(ctx context.Context, arg GetUserInteractionParams) (Interaction, error)
+	HasUserLiked(ctx context.Context, arg HasUserLikedParams) (bool, error)
 	ListPhilosophers(ctx context.Context) ([]Philosopher, error)
 }
 

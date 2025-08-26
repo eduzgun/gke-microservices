@@ -7,8 +7,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createPhilosopher = `-- name: CreatePhilosopher :one
@@ -21,13 +19,13 @@ RETURNING id
 `
 
 type CreatePhilosopherParams struct {
-	Name        string      `json:"name"`
-	DateBorn    pgtype.Text `json:"date_born"`
-	DateDied    pgtype.Text `json:"date_died"`
-	Birthplace  pgtype.Text `json:"birthplace"`
-	Interests   []string    `json:"interests"`
-	PortraitUri pgtype.Text `json:"portrait_uri"`
-	Bio         pgtype.Text `json:"bio"`
+	Name        string   `json:"name"`
+	DateBorn    string   `json:"date_born"`
+	DateDied    string   `json:"date_died"`
+	Birthplace  string   `json:"birthplace"`
+	Interests   []string `json:"interests"`
+	PortraitUri string   `json:"portrait_uri"`
+	Bio         string   `json:"bio"`
 }
 
 func (q *Queries) CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error) {

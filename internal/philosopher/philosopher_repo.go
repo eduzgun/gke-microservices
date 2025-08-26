@@ -6,7 +6,6 @@ import (
 
 	"github.com/eduzgun/gke-microservices/internal/db"
 	"github.com/eduzgun/gke-microservices/internal/models"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type philosopherRepoImpl struct {
@@ -40,13 +39,13 @@ func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Ph
 		philosophers = append(philosophers, models.Philosopher{
 			ID:          int(dbPhilo.ID),
 			Name:        dbPhilo.Name,
-			DateBorn:    pgTextToString(dbPhilo.DateBorn),
-			DateDied:    pgTextToString(dbPhilo.DateDied),
-			Birthplace:  pgTextToString(dbPhilo.Birthplace),
+			DateBorn:    dbPhilo.DateBorn,
+			DateDied:    dbPhilo.DateDied,
+			Birthplace:  dbPhilo.Birthplace,
 			Interests:   dbPhilo.Interests,
-			PortraitURI: pgTextToString(dbPhilo.PortraitUri),
-			Bio:         pgTextToString(dbPhilo.Bio),
-			CreatedAt:   dbPhilo.CreatedAt.Time,
+			PortraitURI: dbPhilo.PortraitUri,
+			Bio:         dbPhilo.Bio,
+			CreatedAt:   dbPhilo.CreatedAt,
 		})
 	}
 
@@ -56,12 +55,12 @@ func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Ph
 func (pr *philosopherRepoImpl) CreatePhilosopher(ctx context.Context, phil models.Philosopher) (int, error) {
 	params := db.CreatePhilosopherParams{
 		Name:        phil.Name,
-		DateBorn:    stringToPgText(phil.DateBorn),
-		DateDied:    stringToPgText(phil.DateDied),
-		Birthplace:  stringToPgText(phil.Birthplace),
+		DateBorn:    phil.DateBorn,
+		DateDied:    phil.DateDied,
+		Birthplace:  phil.Birthplace,
 		Interests:   phil.Interests,
-		PortraitUri: stringToPgText(phil.PortraitURI),
-		Bio:         stringToPgText(phil.Bio),
+		PortraitUri: phil.PortraitURI,
+		Bio:         phil.Bio,
 	}
 
 	id, err := pr.queries.CreatePhilosopher(ctx, params)
@@ -81,28 +80,12 @@ func (pr *philosopherRepoImpl) GetPhilosopher(ctx context.Context, id int32) (mo
 	return models.Philosopher{
 		ID:          int(dbPhilo.ID),
 		Name:        dbPhilo.Name,
-		DateBorn:    pgTextToString(dbPhilo.DateBorn),
-		DateDied:    pgTextToString(dbPhilo.DateDied),
-		Birthplace:  pgTextToString(dbPhilo.Birthplace),
+		DateBorn:    dbPhilo.DateBorn,
+		DateDied:    dbPhilo.DateDied,
+		Birthplace:  dbPhilo.Birthplace,
 		Interests:   dbPhilo.Interests,
-		PortraitURI: pgTextToString(dbPhilo.PortraitUri),
-		Bio:         pgTextToString(dbPhilo.Bio),
-		CreatedAt:   dbPhilo.CreatedAt.Time,
+		PortraitURI: dbPhilo.PortraitUri,
+		Bio:         dbPhilo.Bio,
+		CreatedAt:   dbPhilo.CreatedAt,
 	}, nil
-}
-
-// Helper to convert pgtype.Text to string
-func pgTextToString(t pgtype.Text) string {
-	if t.Valid {
-		return t.String
-	}
-	return ""
-}
-
-// Helper: Convert string to pgtype.Text
-func stringToPgText(s string) pgtype.Text {
-	if s == "" {
-		return pgtype.Text{Valid: false}
-	}
-	return pgtype.Text{String: s, Valid: true}
 }

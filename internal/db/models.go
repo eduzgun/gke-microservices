@@ -5,25 +5,34 @@
 package db
 
 import (
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
+type Interaction struct {
+	ID            int32     `json:"id"`
+	UserID        int32     `json:"user_id"`
+	PhilosopherID int32     `json:"philosopher_id"`
+	Type          string    `json:"type"`
+	Content       string    `json:"content"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
 type Philosopher struct {
-	ID          int32              `json:"id"`
-	Name        string             `json:"name"`
-	DateBorn    pgtype.Text        `json:"date_born"`
-	DateDied    pgtype.Text        `json:"date_died"`
-	Birthplace  pgtype.Text        `json:"birthplace"`
-	Interests   []string           `json:"interests"`
-	PortraitUri pgtype.Text        `json:"portrait_uri"`
-	Bio         pgtype.Text        `json:"bio"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID          int32     `json:"id"`
+	Name        string    `json:"name"`
+	DateBorn    string    `json:"date_born"`
+	DateDied    string    `json:"date_died"`
+	Birthplace  string    `json:"birthplace"`
+	Interests   []string  `json:"interests"`
+	PortraitUri string    `json:"portrait_uri"`
+	Bio         string    `json:"bio"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type User struct {
-	ID        int32              `json:"id"`
-	Username  string             `json:"username"`
-	Email     string             `json:"email"`
-	Password  pgtype.Text        `json:"password"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        int32     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"created_at"`
 }
