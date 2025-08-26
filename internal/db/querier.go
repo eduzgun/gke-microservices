@@ -10,7 +10,10 @@ import (
 
 type Querier interface {
 	CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (int32, error)
 	GetPhilosopher(ctx context.Context, id int32) (Philosopher, error)
+	GetUser(ctx context.Context, id int32) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	ListPhilosophers(ctx context.Context) ([]Philosopher, error)
 }
 

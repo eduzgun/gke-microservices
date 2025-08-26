@@ -46,7 +46,7 @@ func main() {
 
 	philosopherRepo := philosopher.NewPhilosopherRepo(queries)
 	philosopherService := philosopher.NewPhilosopherService(philosopherRepo)
-	philosopherController := philosopher.NewPhilosopherController(philosopherService)
+	philosopherController := philosopher.NewPhilosopherController(philosopherService, log)
 
 	// Build router
 	router := routes.NewRouter()
