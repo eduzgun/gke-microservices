@@ -7,7 +7,66 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createPhilosopher = `-- name: CreatePhilosopher :one
+INSERT INTO philosophers (
+    name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, NOW()
+)
+RETURNING id
+`
+
+type CreatePhilosopherParams struct {
+	Name        string      `json:"name"`
+	DateBorn    pgtype.Text `json:"date_born"`
+	DateDied    pgtype.Text `json:"date_died"`
+	Birthplace  pgtype.Text `json:"birthplace"`
+	Interests   []string    `json:"interests"`
+	PortraitUri pgtype.Text `json:"portrait_uri"`
+	Bio         pgtype.Text `json:"bio"`
+}
+
+func (q *Queries) CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createPhilosopher,
+		arg.Name,
+		arg.DateBorn,
+		arg.DateDied,
+		arg.Birthplace,
+		arg.Interests,
+		arg.PortraitUri,
+		arg.Bio,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const getPhilosopher = `-- name: GetPhilosopher :one
+SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+FROM philosophers
+WHERE id = $1
+`
+
+func (q *Queries) GetPhilosopher(ctx context.Context, id int32) (Philosopher, error) {
+	row := q.db.QueryRow(ctx, getPhilosopher, id)
+	var i Philosopher
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.DateBorn,
+		&i.DateDied,
+		&i.Birthplace,
+		&i.Interests,
+		&i.PortraitUri,
+		&i.Bio,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const listPhilosophers = `-- name: ListPhilosophers :many
 SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at

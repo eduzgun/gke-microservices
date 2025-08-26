@@ -9,6 +9,8 @@ import (
 )
 
 type Querier interface {
+	CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error)
+	GetPhilosopher(ctx context.Context, id int32) (Philosopher, error)
 	ListPhilosophers(ctx context.Context) ([]Philosopher, error)
 }
 
