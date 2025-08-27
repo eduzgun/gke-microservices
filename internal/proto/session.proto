@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package session;
+option go_package = "github.com/eduzgun/gke-microservices/internal/proto/gen/go/session";
+
+service SessionService {
+  rpc ValidateSession(ValidateSessionRequest) returns (ValidateSessionResponse);
+  rpc InvalidateSession(InvalidateSessionRequest) returns (InvalidateSessionResponse);
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+}
+
+message ValidateSessionRequest {
+  string session_id = 1;
+}
+
+message ValidateSessionResponse {
+  bool valid = 1;
+  int32 user_id = 2;
+  string error = 3;
+}
+
+message InvalidateSessionRequest {
+  string session_id = 1;
+}
+
+message InvalidateSessionResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message CreateSessionRequest {
+  int32 user_id = 1;
+}
+
+message CreateSessionResponse {
+  string session_id = 1;
+  string error = 2;  
+}

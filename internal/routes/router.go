@@ -1,10 +1,14 @@
+// internal/routes/router.go
+
 package routes
 
 import (
 	"net/http"
 	"os"
 
+	"github.com/eduzgun/gke-microservices/internal/auth"
 	"github.com/eduzgun/gke-microservices/internal/philosopher"
+	"github.com/eduzgun/gke-microservices/internal/session"
 )
 
 type Router struct {
@@ -24,10 +28,32 @@ func NewRouter() *Router {
 	return &Router{mux: mux}
 }
 
-func (r *Router) RegisterPhilosopherRoutes(controller philosopher.PhilosopherController) {
-	r.mux.HandleFunc("GET /philosophers", controller.HandleGetPhilosophers)
-	r.mux.HandleFunc("GET /philosophers/{id}", controller.HandleGetPhilosopher)
-	r.mux.HandleFunc("POST /philosophers", controller.HandleCreatePhilosopher)
+// RegisterPhilosopherRoutes registers philosopher-related endpoints (all protected for now)
+func (r *Router) RegisterPhilosopherRoutes(pc philosopher.PhilosopherController, sessionClient *session.Client) {
+	// Wrap all philosopher routes with auth middleware
+	protected := http.NewServeMux()
+	protected.HandleFunc("GET /philosophers", pc.HandleGetPhilosophers)
+	protected.HandleFunc("GET /philosophers/{id}", pc.HandleGetPhilosopher)
+	protected.HandleFunc("POST /philosophers", pc.HandleCreatePhilosopher)
+
+	// Apply AuthMiddleware to all /philosophers routes
+	r.mux.Handle("/philosophers", auth.AuthMiddleware(sessionClient)(protected))
+	r.mux.Handle("/philosophers/", auth.AuthMiddleware(sessionClient)(protected))
+}
+
+// RegisterAuthRoutes registers auth endpoints (public + protected)
+func (r *Router) RegisterAuthRoutes(ac auth.AuthController, sessionClient *session.Client) {
+	// Public routes
+	r.mux.HandleFunc("POST /auth/login", ac.Login)
+	r.mux.HandleFunc("POST /auth/register", ac.Register)
+	r.mux.HandleFunc("POST /auth/logout", ac.Logout)
+
+	// Protected routes
+	protected := http.NewServeMux()
+	protected.HandleFunc("GET /profile", ac.Profile)
+
+	// Apply AuthMiddleware to protected routes
+	r.mux.Handle("/profile", auth.AuthMiddleware(sessionClient)(protected))
 }
 
 // ServeHTTP implements http.Handler
@@ -43,12 +69,12 @@ func getCORSOrigins() []string {
 	switch env {
 	case "prod":
 		return []string{
-			"https://deployedapp",
+			"https://yourproductionapp.com",
 		}
 	default:
 		return []string{
 			"http://localhost:3000",
-			"http://localhost:5173", // Vite
+			"http://localhost:5173", // Vite dev
 			"http://localhost:4173",
 			"http://127.0.0.1:3000",
 			"http://127.0.0.1:5173",
@@ -56,12 +82,12 @@ func getCORSOrigins() []string {
 	}
 }
 
+// corsMiddleware adds CORS headers
 func corsMiddleware(next http.Handler) http.Handler {
 	allowedOrigins := getCORSOrigins()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-
 		for _, allowed := range allowedOrigins {
 			if origin == allowed {
 				w.Header().Set("Access-Control-Allow-Origin", origin)

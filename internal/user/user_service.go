@@ -18,7 +18,6 @@ type UserService interface {
 	GetUser(ctx context.Context, id int) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
 	CreateUser(ctx context.Context, user models.User) error
-	Authenticate(ctx context.Context, email, password string) (*models.User, error)
 }
 
 func NewUserService(repo UserRepo) UserService {
@@ -59,20 +58,4 @@ func (s *userServiceImpl) CreateUser(ctx context.Context, user models.User) erro
 	}
 
 	return nil
-}
-
-func (s *userServiceImpl) Authenticate(ctx context.Context, email, password string) (*models.User, error) {
-	user, err := s.repo.GetUserByEmail(ctx, email)
-	if err != nil {
-		return nil, fmt.Errorf("invalid credentials")
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return nil, fmt.Errorf("invalid credentials")
-	}
-
-	// Don't return password
-	user.Password = ""
-	return &user, nil
 }

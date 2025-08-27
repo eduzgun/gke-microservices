@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/eduzgun/gke-microservices/internal/auth"
 	"github.com/eduzgun/gke-microservices/internal/db"
 	"github.com/eduzgun/gke-microservices/internal/logger"
 	"github.com/eduzgun/gke-microservices/internal/philosopher"
 	"github.com/eduzgun/gke-microservices/internal/routes"
+	"github.com/eduzgun/gke-microservices/internal/session"
+	"github.com/eduzgun/gke-microservices/internal/user"
 	"github.com/joho/godotenv"
 )
 
@@ -48,12 +51,32 @@ func main() {
 	philosopherService := philosopher.NewPhilosopherService(philosopherRepo)
 	philosopherController := philosopher.NewPhilosopherController(philosopherService, log)
 
+	userRepo := user.NewUserRepo(queries)
+	userService := user.NewUserService(userRepo)
+
+	// Connect to gRPC sesion service
+	sessionServiceAddr := os.Getenv("SESSION_SERVICE_ADDR")
+	if env == "DEV" {
+		sessionServiceAddr = "localhost:9090" // default for dev
+	}
+
+	sessionClient, err := session.NewClient(sessionServiceAddr)
+	if err != nil {
+		log.Error("Failed to create session client", "error", err)
+		os.Exit(1)
+	}
+	defer sessionClient.Close()
+
+	authService := auth.NewAuthService(userService, sessionClient)
+	authController := auth.NewAuthController(authService, userService, log)
+
 	// Build router
 	router := routes.NewRouter()
-	router.RegisterPhilosopherRoutes(philosopherController)
+	router.RegisterPhilosopherRoutes(philosopherController, sessionClient)
+	router.RegisterAuthRoutes(authController, sessionClient)
 
 	// Start server
-	port := os.Getenv("PORT")
+	port := os.Getenv("API_PORT")
 	if port == "" {
 		port = "8080"
 	}
