@@ -43,27 +43,27 @@ export const loadPhilosopher = async (id: string | number): Promise<Philosopher 
   }
 };
 
-export const savePhilosopher = async (philosopher: Omit<Philosopher, 'id' | 'created_at'>): Promise<Philosopher | null> => {
-  const url = `${API_BASE}/philosophers`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(philosopher)
-    });
+// export const savePhilosopher = async (philosopher: Omit<Philosopher, 'id' | 'created_at'>): Promise<Philosopher | null> => {
+//   const url = `${API_BASE}/philosophers`;
+//   try {
+//     const res = await fetch(url, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(philosopher)
+//     });
     
-    if (!res.ok) {
-      console.warn(`Failed to save philosopher: ${res.status} ${res.statusText}`);
-      return null;
-    }
+//     if (!res.ok) {
+//       console.warn(`Failed to save philosopher: ${res.status} ${res.statusText}`);
+//       return null;
+//     }
     
-    const data = await res.json();
-    console.log('Saved philosopher:', data);
-    return data as Philosopher;
-  } catch (error) {
-    console.error('Network or save error:', error);
-    return null;
-  }
-};
+//     const data = await res.json();
+//     console.log('Saved philosopher:', data);
+//     return data as Philosopher;
+//   } catch (error) {
+//     console.error('Network or save error:', error);
+//     return null;
+//   }
+// };

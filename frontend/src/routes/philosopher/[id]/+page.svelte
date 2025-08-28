@@ -1,43 +1,40 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { page } from "$app/state";
-	import { loadPhilosopher } from '$lib/api';
-	import type { Philosopher } from '$lib/types';
-	import "../../../app.css";
+  import { onMount } from 'svelte';
+  import type { Philosopher } from '$lib/types';
+  import { page } from "$app/state";
+  import { philosopherApi } from '$lib/api/philosophers';
+  import "../../../app.css";
 
-	let philosopher = $state<Philosopher | null>(null);
+  	let philosopher = $state<Philosopher>();
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	let id = $derived(page.params.id);
 
 	onMount(async () => {
-		try {
-			loading = true;
-			error = null;
+			try {
+				loading = true;
+				error = null;
 
-			if (!id) {
-				error = 'Philosopher ID is required';
-				return;
+				if (!id) {
+					error = 'Philosopher ID is required';
+					return;
+				}
+
+				philosopher = await philosopherApi.getById(id);
+
+				if (!philosopher) {
+					error = 'Philosopher not found';
+					return;
+				}
+			} catch (err) {
+				error = 'Failed to load philosophers';
+				console.error(err);
+			} finally {
+				loading = false;
 			}
+		});
 
-			// Call your actual API
-			const loadedPhilosopher = await loadPhilosopher(id);
-			
-			if (!loadedPhilosopher) {
-				error = 'Philosopher not found';
-				return;
-			}
-			
-			philosopher = loadedPhilosopher;
-
-		} catch (err) {
-			error = 'Failed to load philosopher details';
-			console.error(err);
-		} finally {
-			loading = false;
-		}
-	});
 </script>
 
 <svelte:head>
@@ -183,7 +180,7 @@
 								View All Philosophers
 							</a>
 							<a 
-								href="/add"
+								href="/philosopher/add"
 								class="flex-1 border border-gray-300 text-gray-700 text-center py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors"
 							>
 								Add New Philosopher

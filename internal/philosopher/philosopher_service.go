@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/eduzgun/gke-microservices/internal/errs"
 	"github.com/eduzgun/gke-microservices/internal/models"
 )
 
@@ -34,7 +35,7 @@ func (ps *philosopherServiceImpl) GetPhilosopher(ctx context.Context, id int) (*
 	philosopher, err := ps.repo.GetPhilosopher(ctx, int32(id))
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("philosopher not found")
+			return nil, errs.ErrNotFound
 		}
 
 		return nil, fmt.Errorf("failed to fetch philosopher: %w", err)

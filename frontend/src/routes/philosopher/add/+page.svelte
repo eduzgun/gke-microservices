@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { savePhilosopher } from '$lib/api';
+  	import { philosopherApi } from '$lib/api/philosophers';
 	import type { Philosopher } from '$lib/types';
 	import "../../../app.css";
 
@@ -15,7 +15,8 @@
 	let error = $state<string | null>(null);
 	let success = $state(false);
 
-	async function handleSubmit() {
+	const handleSubmit = async (e: Event) => {
+		e.preventDefault();
 		if (!name.trim() || !bio.trim()) {
 			error = 'Name and bio are required';
 			return;
@@ -42,7 +43,7 @@
 			};
 
 			// Call your actual API to save the philosopher
-			const result = await savePhilosopher(newPhilosopher);
+			const result = await philosopherApi.create(newPhilosopher);
 			
 			if (!result) {
 				error = 'Failed to save philosopher';
@@ -115,7 +116,7 @@
 				</div>
 			{/if}
 
-			<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+			<form onsubmit={handleSubmit} class="space-y-6">
 				<!-- Name -->
 				<div>
 					<label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -241,7 +242,7 @@
 					
 					<button
 						type="button"
-						on:click={resetForm}
+						onclick={resetForm}
 						class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 					>
 						Reset

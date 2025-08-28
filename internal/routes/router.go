@@ -34,7 +34,7 @@ func (r *Router) RegisterPhilosopherRoutes(pc philosopher.PhilosopherController,
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /philosophers", pc.HandleGetPhilosophers)
 	protected.HandleFunc("GET /philosophers/{id}", pc.HandleGetPhilosopher)
-	protected.HandleFunc("POST /philosophers", pc.HandleCreatePhilosopher)
+	protected.HandleFunc("POST /philosophers/add", pc.HandleCreatePhilosopher)
 
 	// Apply AuthMiddleware to all /philosophers routes
 	r.mux.Handle("/philosophers", auth.AuthMiddleware(sessionClient)(protected))

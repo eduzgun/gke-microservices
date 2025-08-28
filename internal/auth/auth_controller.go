@@ -4,9 +4,11 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
+	"github.com/eduzgun/gke-microservices/internal/errs"
 	"github.com/eduzgun/gke-microservices/internal/models"
 	"github.com/eduzgun/gke-microservices/internal/user"
 )
@@ -83,6 +85,7 @@ func (ac *authControllerImpl) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := ac.userService.CreateUser(r.Context(), user); err != nil {
+		ac.logger.Error("failed to create user", "err", err)
 		http.Error(w, "Failed to create user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -114,7 +117,13 @@ func (ac *authControllerImpl) Login(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := ac.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		// Check for which type of error it is
+		switch {
+		case errors.Is(err, errs.ErrInvalidCredentials):
+			http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		}
+		http.Error(w, "Server failed on Login, please try again later", http.StatusInternalServerError)
+		ac.logger.Error("failed to login", "err", err)
 		return
 	}
 
@@ -126,7 +135,7 @@ func (ac *authControllerImpl) Login(w http.ResponseWriter, r *http.Request) {
 		Secure:   false, // Set to true in production with HTTPS
 		Path:     "/",
 		MaxAge:   86400,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	w.Header().Set("Content-Type", "application/json")

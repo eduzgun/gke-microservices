@@ -44,7 +44,7 @@ func (q *Queries) CreatePhilosopher(ctx context.Context, arg CreatePhilosopherPa
 }
 
 const getPhilosopher = `-- name: GetPhilosopher :one
-SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+SELECT id, name, date_born, date_died, birthplace, interests, COALESCE(portrait_uri, '') AS portrait_uri, bio, created_at
 FROM philosophers
 WHERE id = $1
 `
@@ -67,7 +67,7 @@ func (q *Queries) GetPhilosopher(ctx context.Context, id int32) (Philosopher, er
 }
 
 const listPhilosophers = `-- name: ListPhilosophers :many
-SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+SELECT id, name, date_born, date_died, birthplace, interests, COALESCE(portrait_uri, '') AS portrait_uri, bio, created_at
 FROM philosophers
 ORDER BY name
 `

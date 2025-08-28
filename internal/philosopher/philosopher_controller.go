@@ -2,12 +2,14 @@ package philosopher
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/eduzgun/gke-microservices/internal/errs"
 	"github.com/eduzgun/gke-microservices/internal/models"
 )
 
@@ -37,6 +39,7 @@ func (pc *philosopherControllerImpl) HandleGetPhilosophers(w http.ResponseWriter
 
 	philosophers, err := pc.service.GetPhilosophers(r.Context())
 	if err != nil {
+		pc.logger.Error("failed to fetch philosophers", "error", err)
 		http.Error(w, "failed to fetch philosophers", http.StatusInternalServerError)
 		return
 	}
@@ -72,7 +75,7 @@ func (pc *philosopherControllerImpl) HandleGetPhilosopher(w http.ResponseWriter,
 
 	philosopher, err := pc.service.GetPhilosopher(r.Context(), id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if errors.Is(err, errs.ErrNotFound) {
 			http.Error(w, "philosopher not found", http.StatusNotFound)
 			return
 		}

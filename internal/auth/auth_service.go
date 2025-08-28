@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/eduzgun/gke-microservices/internal/errs"
 	"github.com/eduzgun/gke-microservices/internal/session"
 	"github.com/eduzgun/gke-microservices/internal/user"
 	"golang.org/x/crypto/bcrypt"
@@ -32,17 +33,17 @@ func (s *authServiceImpl) Login(ctx context.Context, email, password string) (st
 	// Validate credentials
 	user, err := s.userService.GetUserByEmail(ctx, email)
 	if err != nil {
-		return "", fmt.Errorf("invalid credentials")
+		return "", fmt.Errorf("getting user by email: %w", err)
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-		return "", fmt.Errorf("invalid credentials")
+		return "", errs.ErrInvalidCredentials
 	}
 
 	// Create session via gRPC
 	sessionID, err := s.sessionClient.CreateSession(ctx, int32(user.ID))
 	if err != nil {
-		return "", fmt.Errorf("failed to create session: %w", err)
+		return "", fmt.Errorf("failed to create session with gRPC: %w", err)
 	}
 
 	return sessionID, nil

@@ -43,7 +43,7 @@ func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Ph
 			DateDied:    dbPhilo.DateDied,
 			Birthplace:  dbPhilo.Birthplace,
 			Interests:   dbPhilo.Interests,
-			PortraitURI: dbPhilo.PortraitUri,
+			PortraitURI: &dbPhilo.PortraitUri,
 			Bio:         dbPhilo.Bio,
 			CreatedAt:   dbPhilo.CreatedAt,
 		})
@@ -59,7 +59,7 @@ func (pr *philosopherRepoImpl) CreatePhilosopher(ctx context.Context, phil model
 		DateDied:    phil.DateDied,
 		Birthplace:  phil.Birthplace,
 		Interests:   phil.Interests,
-		PortraitUri: phil.PortraitURI,
+		PortraitUri: *phil.PortraitURI,
 		Bio:         phil.Bio,
 	}
 
@@ -84,7 +84,7 @@ func (pr *philosopherRepoImpl) GetPhilosopher(ctx context.Context, id int32) (mo
 		DateDied:    dbPhilo.DateDied,
 		Birthplace:  dbPhilo.Birthplace,
 		Interests:   dbPhilo.Interests,
-		PortraitURI: dbPhilo.PortraitUri,
+		PortraitURI: &dbPhilo.PortraitUri,
 		Bio:         dbPhilo.Bio,
 		CreatedAt:   dbPhilo.CreatedAt,
 	}, nil

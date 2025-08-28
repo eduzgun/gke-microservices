@@ -1,10 +1,10 @@
 -- name: ListPhilosophers :many
-SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+SELECT id, name, date_born, date_died, birthplace, interests, COALESCE(portrait_uri, '') AS portrait_uri, bio, created_at
 FROM philosophers
 ORDER BY name;
 
 -- name: GetPhilosopher :one
-SELECT id, name, date_born, date_died, birthplace, interests, portrait_uri, bio, created_at
+SELECT id, name, date_born, date_died, birthplace, interests, COALESCE(portrait_uri, '') AS portrait_uri, bio, created_at
 FROM philosophers
 WHERE id = $1;
 

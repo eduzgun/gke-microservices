@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	// Load .env file if it exists
+	// Load .env file
 	err := godotenv.Load()
 	if err != nil && !os.IsNotExist(err) {
 		panic("couldn't load env file")
