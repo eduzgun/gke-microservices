@@ -81,8 +81,8 @@ func (s *interactionServiceImpl) GetInteractionsForPhilosopher(ctx context.Conte
 	var responses []models.InteractionResponse
 	for _, i := range dbInteractions {
 		responses = append(responses, models.InteractionResponse{
-			ID:        int(i.ID),
-			Username:  fmt.Sprintf("user-%d", i.UserID),
+			ID:        i.ID,
+			Username:  i.Username,
 			Type:      i.Type,
 			Content:   i.Content,
 			CreatedAt: i.CreatedAt,

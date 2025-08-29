@@ -10,7 +10,11 @@ export const apiClient = {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(text || response.statusText);
+      const errorMessage = text || response.statusText;
+      if (response.status === 401) {
+        throw new Error('You must be logged in to access this resource.');
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -26,7 +30,11 @@ export const apiClient = {
 
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(text || response.statusText);
+      const errorMessage = text || response.statusText;
+      if (response.status === 401) {
+        throw new Error('You must be logged in to perform this action.');
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();

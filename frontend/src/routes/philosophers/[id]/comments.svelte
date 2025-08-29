@@ -16,38 +16,37 @@
     const comments = $derived(interactions.filter(i => i.type === 'comment'));
     const likes = $derived(interactions.filter(i => i.type === 'like'));
     const likeCount = $derived(likes.length);
-    
 
     const authState = $derived.by(() => $authStore);
+    const hasUserLiked = $derived(() => {
+        const user = authState.user;
+        if (!user) return false;
+        return likes.some(like => like.username === user.username);
+    });
 
     let newComment = $state('');
     let loading = $state(false);
     let error = $state<string | null>(null);
-
-    
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault();
         const trimmed = newComment.trim();
         if (!trimmed) return;
 
-        
-        // Ensure user is logged in
         if (!authState.user) {
             error = 'You must be logged in to comment.';
             return;
         }
-        
+
         loading = true;
         error = null;
 
-        
         try {
             const response = await interactionApi.addComment(philosopherId, trimmed);
 
             const newInteraction: Interaction = {
                 id: response.id,
-                username: authState.user.username, // Backend should provide this
+                username: authState.user.username,
                 type: 'comment',
                 content: trimmed,
                 created_at: new Date().toISOString()
@@ -55,7 +54,6 @@
 
             interactions = [newInteraction, ...interactions];
             newComment = '';
-
         } catch (err) {
             error = 'Failed to post comment. Please try again.';
             console.error('🚨 Comment error:', err);
@@ -69,20 +67,21 @@
             const response = await interactionApi.toggleLike(philosopherId);
 
             if (response.liked) {
+                // ✅ Use real username, not placeholder
                 const newLike: Interaction = {
-                    id: Date.now(), // Temporary ID, backend should provide real one
-                    username: 'current_user', // Replace with actual username
+                    id: Date.now(),
+                    username: authState.user!.username, // Now safe because we checked login
                     type: 'like',
                     content: '',
                     created_at: new Date().toISOString()
                 };
                 interactions = [...interactions, newLike];
             } else {
-                interactions = interactions.filter(i => 
-                    !(i.type === 'like' && i.username === 'current_user')
+                // ✅ Remove only this user's like
+                interactions = interactions.filter(
+                    i => !(i.type === 'like' && i.username === authState.user!.username)
                 );
             }
-
         } catch (err) {
             error = 'Failed to update like. Please try again.';
             console.error('🚨 Like error:', err);
@@ -103,8 +102,8 @@
         <button 
             onclick={toggleLike}
             class={`ml-2 text-sm px-2 py-1 rounded-full transition-colors ${
-                likeCount > 0 
-                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                hasUserLiked()
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
         >
