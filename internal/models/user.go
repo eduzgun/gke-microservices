@@ -9,3 +9,9 @@ type User struct {
 	Password  string    `db:"password"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
+
+type ContextKey string
+
+const (
+	UserIDKey ContextKey = "user_id"
+)

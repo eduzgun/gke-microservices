@@ -16,7 +16,6 @@ type Router struct {
 	mux *http.ServeMux
 }
 
-// NewRouter creates a new HTTP router with base routes
 func NewRouter() *Router {
 	mux := http.NewServeMux()
 
@@ -29,7 +28,6 @@ func NewRouter() *Router {
 	return &Router{mux: mux}
 }
 
-// RegisterPhilosopherRoutes registers philosopher-related endpoints (all protected for now)
 func (r *Router) RegisterPhilosopherRoutes(
 	pc philosopher.PhilosopherController,
 	ic interaction.InteractionController,
@@ -47,33 +45,26 @@ func (r *Router) RegisterPhilosopherRoutes(
 	protected.HandleFunc("POST /philosophers/{id}/like", ic.HandleToggleLike)
 	protected.HandleFunc("GET /philosophers/{id}/interactions", ic.HandleGetInteractions)
 
-	// Apply AuthMiddleware ONCE
 	r.mux.Handle("/philosophers", auth.AuthMiddleware(sessionClient)(protected))
 	r.mux.Handle("/philosophers/", auth.AuthMiddleware(sessionClient)(protected))
 }
 
-// RegisterAuthRoutes registers auth endpoints (public + protected)
 func (r *Router) RegisterAuthRoutes(ac auth.AuthController, sessionClient *session.Client) {
 	// Public routes
 	r.mux.HandleFunc("POST /auth/login", ac.Login)
 	r.mux.HandleFunc("POST /auth/register", ac.Register)
-	r.mux.HandleFunc("POST /auth/logout", ac.Logout)
 
-	// Protected routes
-	protected := http.NewServeMux()
-	protected.HandleFunc("GET /profile", ac.Profile)
+	protected := auth.AuthMiddleware(sessionClient)
 
-	// Apply AuthMiddleware to protected routes
-	r.mux.Handle("/profile", auth.AuthMiddleware(sessionClient)(protected))
+	r.mux.Handle("GET /auth/profile", protected(http.HandlerFunc(ac.Profile)))
+	r.mux.Handle("POST /auth/logout", protected(http.HandlerFunc(ac.Logout)))
 }
 
-// ServeHTTP implements http.Handler
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Apply CORS middleware to all requests
 	corsMiddleware(r.mux).ServeHTTP(w, req)
 }
 
-// getCORSOrigins returns allowed origins based on environment
 func getCORSOrigins() []string {
 	env := os.Getenv("ENVIRONMENT")
 
@@ -93,7 +84,6 @@ func getCORSOrigins() []string {
 	}
 }
 
-// corsMiddleware adds CORS headers
 func corsMiddleware(next http.Handler) http.Handler {
 	allowedOrigins := getCORSOrigins()
 

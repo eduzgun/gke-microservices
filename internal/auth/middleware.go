@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/eduzgun/gke-microservices/internal/models"
 	"github.com/eduzgun/gke-microservices/internal/session"
 )
 
@@ -32,7 +33,7 @@ func AuthMiddleware(sessionClient *session.Client) func(http.Handler) http.Handl
 			}
 
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "user_id", userID)
+			ctx = context.WithValue(ctx, models.UserIDKey, userID)
 			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)

@@ -57,7 +57,7 @@ func main() {
 
 	interactionRepo := interaction.NewInteractionRepo(queries)
 	interactionService := interaction.NewInteractionService(interactionRepo)
-	interactionController := interaction.NewInteractionController(interactionService, log)
+	interactionController := interaction.NewInteractionController(interactionService, log, userService)
 
 	// Connect to gRPC sesion service
 	sessionServiceAddr := os.Getenv("SESSION_SERVICE_ADDR")

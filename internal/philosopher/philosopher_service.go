@@ -29,7 +29,6 @@ func (ps *philosopherServiceImpl) GetPhilosophers(ctx context.Context) ([]models
 	return ps.repo.GetPhilosophers(ctx)
 }
 
-// service/philosopher_service_impl.go
 func (ps *philosopherServiceImpl) GetPhilosopher(ctx context.Context, id int) (*models.Philosopher, error) {
 
 	philosopher, err := ps.repo.GetPhilosopher(ctx, int32(id))

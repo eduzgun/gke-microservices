@@ -10,7 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AuthService handles HTTP authentication logic
 type authServiceImpl struct {
 	userService   user.UserService
 	sessionClient *session.Client
@@ -28,7 +27,6 @@ func NewAuthService(userService user.UserService, sessionClient *session.Client)
 	}
 }
 
-// Login handles user authentication and creates session
 func (s *authServiceImpl) Login(ctx context.Context, email, password string) (string, error) {
 	// Validate credentials
 	user, err := s.userService.GetUserByEmail(ctx, email)
@@ -49,7 +47,6 @@ func (s *authServiceImpl) Login(ctx context.Context, email, password string) (st
 	return sessionID, nil
 }
 
-// Logout invalidates the session
 func (s *authServiceImpl) Logout(ctx context.Context, sessionID string) error {
 	return s.sessionClient.InvalidateSession(ctx, sessionID)
 }

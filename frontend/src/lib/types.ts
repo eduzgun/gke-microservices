@@ -17,3 +17,8 @@ export type Interaction = {
     content: string;
     created_at: string; // time.Time → serialized as ISO string
 };
+
+export type User = {
+    id: number;
+    username: string;
+} | null;

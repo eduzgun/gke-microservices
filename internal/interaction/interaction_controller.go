@@ -11,11 +11,14 @@ import (
 	"strings"
 
 	"github.com/eduzgun/gke-microservices/internal/errs"
+	"github.com/eduzgun/gke-microservices/internal/models"
+	"github.com/eduzgun/gke-microservices/internal/user"
 )
 
 type interactionControllerImpl struct {
-	service InteractionService
-	logger  *slog.Logger
+	service     InteractionService
+	logger      *slog.Logger
+	userService user.UserService
 }
 
 type InteractionController interface {
@@ -24,22 +27,17 @@ type InteractionController interface {
 	HandleGetInteractions(w http.ResponseWriter, r *http.Request)
 }
 
-func NewInteractionController(service InteractionService, logger *slog.Logger) InteractionController {
+func NewInteractionController(service InteractionService, logger *slog.Logger, userService user.UserService) InteractionController {
 	return &interactionControllerImpl{
-		service: service,
-		logger:  logger,
+		service:     service,
+		logger:      logger,
+		userService: userService,
 	}
 }
 
 func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r *http.Request) {
-	// Add debugging
-	c.logger.Info("HandleCreateComment called",
-		"method", r.Method,
-		"url", r.URL.Path,
-		"full_url", r.URL.String())
-
 	if r.Method != http.MethodPost {
-		c.logger.Error("Wrong method", "method", r.Method)
+
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -52,6 +50,14 @@ func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r
 	userID := getUserIDFromContext(r)
 	if userID == 0 {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get the username from userID
+	user, err := c.userService.GetUser(r.Context(), userID)
+	if err != nil {
+		c.logger.Error("Failed to get user", "error", err)
+		http.Error(w, "server failed to get user", http.StatusInternalServerError)
 		return
 	}
 
@@ -69,8 +75,7 @@ func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r
 		return
 	}
 
-	// ✅ Get the created comment back from service
-	comment, err := c.service.CreateComment(r.Context(), userID, philID, req.Content)
+	comment, err := c.service.CreateComment(r.Context(), userID, philID, user.Username, req.Content)
 	if err != nil {
 		if errors.Is(err, errs.ErrCommentContentRequired) {
 			http.Error(w, "please add content to your comment before submitting", http.StatusBadRequest)
@@ -83,7 +88,7 @@ func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(comment) // ✅ Return the actual comment
+	json.NewEncoder(w).Encode(comment)
 }
 
 func (c *interactionControllerImpl) HandleToggleLike(w http.ResponseWriter, r *http.Request) {
@@ -98,22 +103,28 @@ func (c *interactionControllerImpl) HandleToggleLike(w http.ResponseWriter, r *h
 		return
 	}
 
+	// Get the username from userID
+	user, err := c.userService.GetUser(r.Context(), userID)
+	if err != nil {
+		c.logger.Error("Failed to get user", "error", err)
+		http.Error(w, "server failed to get user", http.StatusInternalServerError)
+		return
+	}
+
 	philID, err := getIDFromPath(r, "/philosophers/")
 	if err != nil {
 		http.Error(w, "invalid philosopher ID", http.StatusBadRequest)
 		return
 	}
 
-	// Try to remove like first (assume it exists)
-	err = c.service.RemoveLike(r.Context(), userID, philID)
+	err = c.service.RemoveLike(r.Context(), userID, philID, user.Username)
 	if err == nil {
 		json.NewEncoder(w).Encode(map[string]bool{"liked": false})
 		return
 	}
 
-	// If not found, create it
 	if strings.Contains(err.Error(), "not found") {
-		if err := c.service.CreateLike(r.Context(), userID, philID); err != nil {
+		if err := c.service.CreateLike(r.Context(), userID, philID, user.Username); err != nil {
 			c.logger.Error("failed to like", "error", err)
 			http.Error(w, "failed to like", http.StatusInternalServerError)
 			return
@@ -148,7 +159,6 @@ func (c *interactionControllerImpl) HandleGetInteractions(w http.ResponseWriter,
 	json.NewEncoder(w).Encode(interactions)
 }
 
-// Helper: extract ID from /philosophers/123/comments
 func getIDFromPath(r *http.Request, prefix string) (int, error) {
 	path := r.URL.Path
 	start := strings.Index(path, prefix)
@@ -165,9 +175,8 @@ func getIDFromPath(r *http.Request, prefix string) (int, error) {
 	return strconv.Atoi(path[start:end])
 }
 
-// Helper: get user ID from context (set by auth middleware)
 func getUserIDFromContext(r *http.Request) int {
-	if uid, ok := r.Context().Value("user_id").(int); ok {
+	if uid, ok := r.Context().Value(models.UserIDKey).(int); ok {
 		return uid
 	}
 	return 0

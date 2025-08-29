@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Interaction } from '$lib/types';
     import { interactionApi } from '$lib/api/interactions';
+    import { authStore } from '$lib/stores/auth';
 
     const {
         interactions: initialInteractions,
@@ -15,26 +16,38 @@
     const comments = $derived(interactions.filter(i => i.type === 'comment'));
     const likes = $derived(interactions.filter(i => i.type === 'like'));
     const likeCount = $derived(likes.length);
-    //const userLiked = $derived(likes.some(like => like.username === 'current_user')); // Replace with actual user check
+    
+
+    const authState = $derived.by(() => $authStore);
 
     let newComment = $state('');
     let loading = $state(false);
     let error = $state<string | null>(null);
+
+    
 
     const handleSubmit = async (e: Event) => {
         e.preventDefault();
         const trimmed = newComment.trim();
         if (!trimmed) return;
 
+        
+        // Ensure user is logged in
+        if (!authState.user) {
+            error = 'You must be logged in to comment.';
+            return;
+        }
+        
         loading = true;
         error = null;
 
+        
         try {
             const response = await interactionApi.addComment(philosopherId, trimmed);
 
             const newInteraction: Interaction = {
                 id: response.id,
-                username: response.username || 'You', // Backend should provide this
+                username: authState.user.username, // Backend should provide this
                 type: 'comment',
                 content: trimmed,
                 created_at: new Date().toISOString()

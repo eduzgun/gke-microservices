@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { authApi } from '$lib/api/auth';
-
+  import { authStore } from '$lib/stores/auth';
   import '../../app.css';
   
   let email = $state('');
@@ -27,7 +27,10 @@
 
     try {
       await authApi.login({ email, password });
-      goto('/profile');
+
+      // Force refresh of auth state
+      await authStore.init();
+      goto('/');
     } catch (err: any) {
       error = err.message || 'Login failed';
     } finally {

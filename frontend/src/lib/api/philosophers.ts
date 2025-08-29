@@ -1,4 +1,3 @@
-// src/lib/api/philosophers.ts
 import type { Philosopher } from '$lib/types';
 import { apiClient } from './client';
 

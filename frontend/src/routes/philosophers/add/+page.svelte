@@ -42,7 +42,6 @@
 				interests: interestsArray
 			};
 
-			// Call your actual API to save the philosopher
 			const result = await philosopherApi.create(newPhilosopher);
 			
 			if (!result) {
@@ -53,10 +52,9 @@
 			console.log('Philosopher created with ID:', result.id);
 			success = true;
 			
-			// Clear form after successful submission
 			setTimeout(() => {
 				resetForm();
-				goto('/'); // Redirect to main page
+				goto('/');
 			}, 2000);
 
 		} catch (err) {

@@ -1,4 +1,3 @@
-// src/lib/api/client.ts
 import { PUBLIC_GO_API_BASE } from '$env/static/public';
 
 const API_BASE = PUBLIC_GO_API_BASE || 'http://localhost:8080';

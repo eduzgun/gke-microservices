@@ -10,13 +10,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// Client wraps the gRPC session client
 type Client struct {
 	client pb.SessionServiceClient
 	conn   *grpc.ClientConn
 }
 
-// NewClient creates a new session service client
 func NewClient(sessionServiceAddr string) (*Client, error) {
 	conn, err := grpc.NewClient(sessionServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

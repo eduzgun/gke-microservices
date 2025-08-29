@@ -4,6 +4,7 @@ CREATE TABLE interactions (
     id               SERIAL PRIMARY KEY,
     user_id          INT NOT NULL REFERENCES users(id),
     philosopher_id   INT NOT NULL REFERENCES philosophers(id),
+    username         TEXT NOT NULL,
     type             TEXT NOT NULL CHECK (type IN ('like', 'comment')),
     content          TEXT,
     created_at       TIMESTAMPTZ DEFAULT NOW(),

@@ -26,15 +26,17 @@ const createCommentInteraction = `-- name: CreateCommentInteraction :one
 INSERT INTO interactions (
     user_id,
     philosopher_id,
+    username,
     type,
     content,
     created_at
-) VALUES ($1, $2, 'comment', $3, NOW()) RETURNING id, user_id, philosopher_id, content, created_at
+) VALUES ($1, $2, $3, 'comment', $4, NOW()) RETURNING id, user_id, philosopher_id, username, content, created_at
 `
 
 type CreateCommentInteractionParams struct {
 	UserID        int32  `json:"user_id"`
 	PhilosopherID int32  `json:"philosopher_id"`
+	Username      string `json:"username"`
 	Content       string `json:"content"`
 }
 
@@ -42,17 +44,24 @@ type CreateCommentInteractionRow struct {
 	ID            int32     `json:"id"`
 	UserID        int32     `json:"user_id"`
 	PhilosopherID int32     `json:"philosopher_id"`
+	Username      string    `json:"username"`
 	Content       string    `json:"content"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
 func (q *Queries) CreateCommentInteraction(ctx context.Context, arg CreateCommentInteractionParams) (CreateCommentInteractionRow, error) {
-	row := q.db.QueryRow(ctx, createCommentInteraction, arg.UserID, arg.PhilosopherID, arg.Content)
+	row := q.db.QueryRow(ctx, createCommentInteraction,
+		arg.UserID,
+		arg.PhilosopherID,
+		arg.Username,
+		arg.Content,
+	)
 	var i CreateCommentInteractionRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.PhilosopherID,
+		&i.Username,
 		&i.Content,
 		&i.CreatedAt,
 	)
@@ -63,19 +72,21 @@ const createLikeInteraction = `-- name: CreateLikeInteraction :exec
 INSERT INTO interactions (
     user_id,
     philosopher_id,
+    username,
     type,
     content,
     created_at
-) VALUES ($1, $2, 'like', NULL, NOW())
+) VALUES ($1, $2, $3, 'like', NULL, NOW())
 `
 
 type CreateLikeInteractionParams struct {
-	UserID        int32 `json:"user_id"`
-	PhilosopherID int32 `json:"philosopher_id"`
+	UserID        int32  `json:"user_id"`
+	PhilosopherID int32  `json:"philosopher_id"`
+	Username      string `json:"username"`
 }
 
 func (q *Queries) CreateLikeInteraction(ctx context.Context, arg CreateLikeInteractionParams) error {
-	_, err := q.db.Exec(ctx, createLikeInteraction, arg.UserID, arg.PhilosopherID)
+	_, err := q.db.Exec(ctx, createLikeInteraction, arg.UserID, arg.PhilosopherID, arg.Username)
 	return err
 }
 
@@ -94,6 +105,7 @@ SELECT
     i.id,
     i.user_id,
     i.philosopher_id,
+    i.username,
     i.type,
     COALESCE(i.content, '') as content,
     i.created_at,
@@ -108,10 +120,11 @@ type GetInteractionsByPhilosopherRow struct {
 	ID            int32     `json:"id"`
 	UserID        int32     `json:"user_id"`
 	PhilosopherID int32     `json:"philosopher_id"`
+	Username      string    `json:"username"`
 	Type          string    `json:"type"`
 	Content       string    `json:"content"`
 	CreatedAt     time.Time `json:"created_at"`
-	Username      string    `json:"username"`
+	Username_2    string    `json:"username_2"`
 }
 
 func (q *Queries) GetInteractionsByPhilosopher(ctx context.Context, philosopherID int32) ([]GetInteractionsByPhilosopherRow, error) {
@@ -127,10 +140,11 @@ func (q *Queries) GetInteractionsByPhilosopher(ctx context.Context, philosopherI
 			&i.ID,
 			&i.UserID,
 			&i.PhilosopherID,
+			&i.Username,
 			&i.Type,
 			&i.Content,
 			&i.CreatedAt,
-			&i.Username,
+			&i.Username_2,
 		); err != nil {
 			return nil, err
 		}
@@ -143,7 +157,7 @@ func (q *Queries) GetInteractionsByPhilosopher(ctx context.Context, philosopherI
 }
 
 const getUserInteraction = `-- name: GetUserInteraction :one
-SELECT id, user_id, philosopher_id, type, COALESCE(content, '') as content, created_at
+SELECT id, user_id, philosopher_id, username, type, COALESCE(content, '') as content, created_at
 FROM interactions
 WHERE user_id = $1 
   AND philosopher_id = $2 
@@ -163,6 +177,7 @@ func (q *Queries) GetUserInteraction(ctx context.Context, arg GetUserInteraction
 		&i.ID,
 		&i.UserID,
 		&i.PhilosopherID,
+		&i.Username,
 		&i.Type,
 		&i.Content,
 		&i.CreatedAt,

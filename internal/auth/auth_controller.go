@@ -1,5 +1,3 @@
-// internal/auth/auth_controller.go
-
 package auth
 
 import (
@@ -81,7 +79,7 @@ func (ac *authControllerImpl) Register(w http.ResponseWriter, r *http.Request) {
 	user := models.User{
 		Username: req.Username,
 		Email:    req.Email,
-		Password: req.Password, // will be hashed in service
+		Password: req.Password,
 	}
 
 	if err := ac.userService.CreateUser(r.Context(), user); err != nil {
@@ -193,7 +191,8 @@ func (ac *authControllerImpl) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := r.Context().Value("user_id").(int32)
+	// Get userID from context set by middleware
+	userID, ok := r.Context().Value(models.UserIDKey).(int)
 	if !ok {
 		http.Error(w, "User not authenticated", http.StatusUnauthorized)
 		return
@@ -201,6 +200,7 @@ func (ac *authControllerImpl) Profile(w http.ResponseWriter, r *http.Request) {
 
 	user, err := ac.userService.GetUser(r.Context(), int(userID))
 	if err != nil {
+		ac.logger.Error("Failed to get user", "error", err)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
