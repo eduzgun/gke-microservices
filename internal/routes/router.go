@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/eduzgun/gke-microservices/internal/auth"
+	"github.com/eduzgun/gke-microservices/internal/interaction"
 	"github.com/eduzgun/gke-microservices/internal/philosopher"
 	"github.com/eduzgun/gke-microservices/internal/session"
 )
@@ -29,14 +30,24 @@ func NewRouter() *Router {
 }
 
 // RegisterPhilosopherRoutes registers philosopher-related endpoints (all protected for now)
-func (r *Router) RegisterPhilosopherRoutes(pc philosopher.PhilosopherController, sessionClient *session.Client) {
-	// Wrap all philosopher routes with auth middleware
+func (r *Router) RegisterPhilosopherRoutes(
+	pc philosopher.PhilosopherController,
+	ic interaction.InteractionController,
+	sessionClient *session.Client,
+) {
 	protected := http.NewServeMux()
-	protected.HandleFunc("GET /philosophers", pc.HandleGetPhilosophers)
+
+	// Philosopher routes
+	protected.HandleFunc("GET /philosophers/", pc.HandleGetPhilosophers)
 	protected.HandleFunc("GET /philosophers/{id}", pc.HandleGetPhilosopher)
 	protected.HandleFunc("POST /philosophers/add", pc.HandleCreatePhilosopher)
 
-	// Apply AuthMiddleware to all /philosophers routes
+	// Interaction routes
+	protected.HandleFunc("POST /philosophers/{id}/comments", ic.HandleCreateComment)
+	protected.HandleFunc("POST /philosophers/{id}/like", ic.HandleToggleLike)
+	protected.HandleFunc("GET /philosophers/{id}/interactions", ic.HandleGetInteractions)
+
+	// Apply AuthMiddleware ONCE
 	r.mux.Handle("/philosophers", auth.AuthMiddleware(sessionClient)(protected))
 	r.mux.Handle("/philosophers/", auth.AuthMiddleware(sessionClient)(protected))
 }

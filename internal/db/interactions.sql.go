@@ -22,31 +22,60 @@ func (q *Queries) CountLikesByPhilosopher(ctx context.Context, philosopherID int
 	return count, err
 }
 
-const createInteraction = `-- name: CreateInteraction :exec
+const createCommentInteraction = `-- name: CreateCommentInteraction :one
 INSERT INTO interactions (
     user_id,
     philosopher_id,
     type,
-    content
-) VALUES (
-    $1, $2, $3, $4
-)
+    content,
+    created_at
+) VALUES ($1, $2, 'comment', $3, NOW()) RETURNING id, user_id, philosopher_id, content, created_at
 `
 
-type CreateInteractionParams struct {
+type CreateCommentInteractionParams struct {
 	UserID        int32  `json:"user_id"`
 	PhilosopherID int32  `json:"philosopher_id"`
-	Type          string `json:"type"`
 	Content       string `json:"content"`
 }
 
-func (q *Queries) CreateInteraction(ctx context.Context, arg CreateInteractionParams) error {
-	_, err := q.db.Exec(ctx, createInteraction,
-		arg.UserID,
-		arg.PhilosopherID,
-		arg.Type,
-		arg.Content,
+type CreateCommentInteractionRow struct {
+	ID            int32     `json:"id"`
+	UserID        int32     `json:"user_id"`
+	PhilosopherID int32     `json:"philosopher_id"`
+	Content       string    `json:"content"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func (q *Queries) CreateCommentInteraction(ctx context.Context, arg CreateCommentInteractionParams) (CreateCommentInteractionRow, error) {
+	row := q.db.QueryRow(ctx, createCommentInteraction, arg.UserID, arg.PhilosopherID, arg.Content)
+	var i CreateCommentInteractionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.PhilosopherID,
+		&i.Content,
+		&i.CreatedAt,
 	)
+	return i, err
+}
+
+const createLikeInteraction = `-- name: CreateLikeInteraction :exec
+INSERT INTO interactions (
+    user_id,
+    philosopher_id,
+    type,
+    content,
+    created_at
+) VALUES ($1, $2, 'like', NULL, NOW())
+`
+
+type CreateLikeInteractionParams struct {
+	UserID        int32 `json:"user_id"`
+	PhilosopherID int32 `json:"philosopher_id"`
+}
+
+func (q *Queries) CreateLikeInteraction(ctx context.Context, arg CreateLikeInteractionParams) error {
+	_, err := q.db.Exec(ctx, createLikeInteraction, arg.UserID, arg.PhilosopherID)
 	return err
 }
 
@@ -66,7 +95,7 @@ SELECT
     i.user_id,
     i.philosopher_id,
     i.type,
-    i.content,
+    COALESCE(i.content, '') as content,
     i.created_at,
     u.username
 FROM interactions i
@@ -114,7 +143,7 @@ func (q *Queries) GetInteractionsByPhilosopher(ctx context.Context, philosopherI
 }
 
 const getUserInteraction = `-- name: GetUserInteraction :one
-SELECT id, user_id, philosopher_id, type, content, created_at
+SELECT id, user_id, philosopher_id, type, COALESCE(content, '') as content, created_at
 FROM interactions
 WHERE user_id = $1 
   AND philosopher_id = $2 

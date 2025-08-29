@@ -1,12 +1,20 @@
--- name: CreateInteraction :exec
+-- name: CreateLikeInteraction :exec
 INSERT INTO interactions (
     user_id,
     philosopher_id,
     type,
-    content
-) VALUES (
-    $1, $2, $3, $4
-);
+    content,
+    created_at
+) VALUES ($1, $2, 'like', NULL, NOW());
+
+-- name: CreateCommentInteraction :one
+INSERT INTO interactions (
+    user_id,
+    philosopher_id,
+    type,
+    content,
+    created_at
+) VALUES ($1, $2, 'comment', $3, NOW()) RETURNING id, user_id, philosopher_id, content, created_at;
 
 -- name: GetInteractionsByPhilosopher :many
 SELECT 
@@ -14,7 +22,7 @@ SELECT
     i.user_id,
     i.philosopher_id,
     i.type,
-    i.content,
+    COALESCE(i.content, '') as content,
     i.created_at,
     u.username
 FROM interactions i
@@ -23,7 +31,7 @@ WHERE i.philosopher_id = $1
 ORDER BY i.created_at DESC;
 
 -- name: GetUserInteraction :one
-SELECT id, user_id, philosopher_id, type, content, created_at
+SELECT id, user_id, philosopher_id, type, COALESCE(content, '') as content, created_at
 FROM interactions
 WHERE user_id = $1 
   AND philosopher_id = $2 

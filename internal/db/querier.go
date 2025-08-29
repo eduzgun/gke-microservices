@@ -10,7 +10,8 @@ import (
 
 type Querier interface {
 	CountLikesByPhilosopher(ctx context.Context, philosopherID int32) (int64, error)
-	CreateInteraction(ctx context.Context, arg CreateInteractionParams) error
+	CreateCommentInteraction(ctx context.Context, arg CreateCommentInteractionParams) (CreateCommentInteractionRow, error)
+	CreateLikeInteraction(ctx context.Context, arg CreateLikeInteractionParams) error
 	CreatePhilosopher(ctx context.Context, arg CreatePhilosopherParams) (int32, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (int32, error)
 	DeleteInteraction(ctx context.Context, id int32) error

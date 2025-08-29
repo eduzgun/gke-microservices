@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/eduzgun/gke-microservices/internal/errs"
 	"github.com/eduzgun/gke-microservices/internal/models"
 )
 
@@ -13,7 +14,7 @@ type interactionServiceImpl struct {
 }
 
 type InteractionService interface {
-	CreateComment(ctx context.Context, userID, philID int, content string) error
+	CreateComment(ctx context.Context, userID, philID int, content string) (*models.Comment, error)
 	CreateLike(ctx context.Context, userID, philID int) error
 	RemoveLike(ctx context.Context, userID, philID int) error
 	GetInteractionsForPhilosopher(ctx context.Context, philID int) ([]models.InteractionResponse, error)
@@ -23,19 +24,31 @@ func NewInteractionService(repo InteractionRepo) InteractionService {
 	return &interactionServiceImpl{repo: repo}
 }
 
-func (s *interactionServiceImpl) CreateComment(ctx context.Context, userID, philID int, content string) error {
+func (s *interactionServiceImpl) CreateComment(
+	ctx context.Context,
+	userID, philID int,
+	content string,
+) (*models.Comment, error) {
 	if content == "" {
-		return fmt.Errorf("comment content is required")
+		return nil, errs.ErrCommentContentRequired
 	}
 
-	interaction := models.Interaction{
-		UserID:        userID,
-		PhilosopherID: philID,
-		Type:          "comment",
-		Content:       content,
+	// Call repo — now returns a db.CommentInteraction and possibly error
+	dbComment, err := s.repo.CreateCommentInteraction(ctx, userID, philID, content)
+	if err != nil {
+		return nil, fmt.Errorf("creating comment interaction: %w", err)
 	}
 
-	return s.repo.CreateInteraction(ctx, interaction)
+	// Map db struct to domain/model struct (optional but clean)
+	comment := &models.Comment{
+		ID:            int(dbComment.ID),
+		UserID:        int(dbComment.UserID),
+		PhilosopherID: int(dbComment.PhilosopherID),
+		Content:       dbComment.Content,
+		CreatedAt:     dbComment.CreatedAt,
+	}
+
+	return comment, nil
 }
 
 func (s *interactionServiceImpl) CreateLike(ctx context.Context, userID, philID int) error {
@@ -45,13 +58,11 @@ func (s *interactionServiceImpl) CreateLike(ctx context.Context, userID, philID 
 		return fmt.Errorf("already liked")
 	}
 
-	interaction := models.Interaction{
-		UserID:        userID,
-		PhilosopherID: philID,
-		Type:          "like",
+	err = s.repo.CreateLikeInteraction(ctx, userID, philID)
+	if err != nil {
+		return fmt.Errorf("creating like interaction: %w", err)
 	}
-
-	return s.repo.CreateInteraction(ctx, interaction)
+	return nil
 }
 
 func (s *interactionServiceImpl) RemoveLike(ctx context.Context, userID, philID int) error {

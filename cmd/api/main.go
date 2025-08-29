@@ -7,6 +7,7 @@ import (
 
 	"github.com/eduzgun/gke-microservices/internal/auth"
 	"github.com/eduzgun/gke-microservices/internal/db"
+	"github.com/eduzgun/gke-microservices/internal/interaction"
 	"github.com/eduzgun/gke-microservices/internal/logger"
 	"github.com/eduzgun/gke-microservices/internal/philosopher"
 	"github.com/eduzgun/gke-microservices/internal/routes"
@@ -54,6 +55,10 @@ func main() {
 	userRepo := user.NewUserRepo(queries)
 	userService := user.NewUserService(userRepo)
 
+	interactionRepo := interaction.NewInteractionRepo(queries)
+	interactionService := interaction.NewInteractionService(interactionRepo)
+	interactionController := interaction.NewInteractionController(interactionService, log)
+
 	// Connect to gRPC sesion service
 	sessionServiceAddr := os.Getenv("SESSION_SERVICE_ADDR")
 	if env == "DEV" {
@@ -72,7 +77,7 @@ func main() {
 
 	// Build router
 	router := routes.NewRouter()
-	router.RegisterPhilosopherRoutes(philosopherController, sessionClient)
+	router.RegisterPhilosopherRoutes(philosopherController, interactionController, sessionClient)
 	router.RegisterAuthRoutes(authController, sessionClient)
 
 	// Start server

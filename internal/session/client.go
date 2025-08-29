@@ -51,7 +51,7 @@ func (c *Client) CreateSession(ctx context.Context, userID int32) (string, error
 }
 
 // ValidateSession validates a session
-func (c *Client) ValidateSession(ctx context.Context, sessionID string) (bool, int32, error) {
+func (c *Client) ValidateSession(ctx context.Context, sessionID string) (bool, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -66,7 +66,7 @@ func (c *Client) ValidateSession(ctx context.Context, sessionID string) (bool, i
 		return false, 0, fmt.Errorf("session invalid: %s", resp.Error)
 	}
 
-	return resp.Valid, resp.UserId, nil
+	return resp.Valid, int(resp.UserId), nil
 }
 
 // InvalidateSession invalidates a session

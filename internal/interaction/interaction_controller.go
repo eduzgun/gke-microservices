@@ -3,11 +3,14 @@ package interaction
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/eduzgun/gke-microservices/internal/errs"
 )
 
 type interactionControllerImpl struct {
@@ -29,12 +32,24 @@ func NewInteractionController(service InteractionService, logger *slog.Logger) I
 }
 
 func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r *http.Request) {
+	// Add debugging
+	c.logger.Info("HandleCreateComment called",
+		"method", r.Method,
+		"url", r.URL.Path,
+		"full_url", r.URL.String())
+
+	if r.Method != http.MethodPost {
+		c.logger.Error("Wrong method", "method", r.Method)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	userID := getUserIDFromContext(r) // assume you have middleware that sets this
+	userID := getUserIDFromContext(r)
 	if userID == 0 {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
@@ -54,14 +69,21 @@ func (c *interactionControllerImpl) HandleCreateComment(w http.ResponseWriter, r
 		return
 	}
 
-	if err := c.service.CreateComment(r.Context(), userID, philID, req.Content); err != nil {
+	// ✅ Get the created comment back from service
+	comment, err := c.service.CreateComment(r.Context(), userID, philID, req.Content)
+	if err != nil {
+		if errors.Is(err, errs.ErrCommentContentRequired) {
+			http.Error(w, "please add content to your comment before submitting", http.StatusBadRequest)
+			return
+		}
 		c.logger.Error("failed to create comment", "error", err)
 		http.Error(w, "failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "comment created"})
+	json.NewEncoder(w).Encode(comment) // ✅ Return the actual comment
 }
 
 func (c *interactionControllerImpl) HandleToggleLike(w http.ResponseWriter, r *http.Request) {

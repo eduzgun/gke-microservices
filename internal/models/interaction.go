@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Interaction struct {
 	ID            int    `json:"id"`
 	UserID        int    `json:"user_id"`
@@ -16,4 +18,12 @@ type InteractionResponse struct {
 	Type      string `json:"type"`
 	Content   string `json:"content,omitempty"`
 	CreatedAt string `json:"created_at"`
+}
+
+type Comment struct {
+	ID            int       `json:"id" db:"id"`
+	UserID        int       `json:"userId" db:"user_id"`
+	PhilosopherID int       `json:"philosopherId" db:"philosopher_id"`
+	Content       string    `json:"content" db:"content"`
+	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
 }
