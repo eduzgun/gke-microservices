@@ -39,7 +39,7 @@
 			<!-- Add New Philosopher Button -->
 			<div class="mt-6">
 				<a 
-					href="/philosopher/add" 
+					href="/philosophers/add" 
 					class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
 				>
 					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +66,7 @@
 				<h3 class="text-xl font-semibold text-gray-900 mb-2">No Philosophers Found</h3>
 				<p class="text-gray-600 mb-4">Check back later for more content.</p>
 				<a 
-					href="/philosopher/add" 
+					href="/philosophers/add" 
 					class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 				>
 					Add the first philosopher
@@ -77,7 +77,7 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{#each philosophers as philosopher}
 					<a 
-						href="/philosopher/{philosopher.id}" 
+						href="/philosophers/{philosopher.id}" 
 						class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 group"
 					>
 						<!-- Portrait -->

@@ -1,9 +1,17 @@
+// src/lib/api/philosophers.ts
 import type { Philosopher } from '$lib/types';
 import { apiClient } from './client';
 
 export const philosopherApi = {
-  getAll: () => apiClient.get<Philosopher[]>('/philosophers'),
-  getById: (id: number | string) => apiClient.get<Philosopher>(`/philosophers/${id}`),
-  create: (philosopher: Omit<Philosopher, 'id' | 'created_at'>) =>
-    apiClient.post<Philosopher>('/philosophers/add', philosopher),
+  getAll: ({ fetch }: { fetch?: typeof globalThis.fetch } = {}) =>
+    apiClient.get<Philosopher[]>('/philosophers', { fetch }),
+
+  getById: (id: number | string, { fetch }: { fetch?: typeof globalThis.fetch } = {}) =>
+    apiClient.get<Philosopher>(`/philosophers/${id}`, { fetch }),
+
+  create: (
+    philosopher: Omit<Philosopher, 'id' | 'created_at'>,
+    { fetch }: { fetch?: typeof globalThis.fetch } = {}
+  ) =>
+    apiClient.post<Philosopher>('/philosophers/add', philosopher, { fetch }),
 };

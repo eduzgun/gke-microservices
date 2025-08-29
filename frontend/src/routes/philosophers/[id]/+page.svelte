@@ -1,41 +1,61 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type { Philosopher } from '$lib/types';
-  import { page } from "$app/state";
-  import { philosopherApi } from '$lib/api/philosophers';
-  import "../../../app.css";
+	import { onMount } from 'svelte';
+	import type { Philosopher, Interaction } from '$lib/types';
+	import { page } from "$app/state";
+	import { interactionApi } from '$lib/api/interactions'; // Import both APIs
+	import { philosopherApi } from '$lib/api/philosophers';
+	import "../../../app.css";
+	import Comments from './comments.svelte';
 
-  	let philosopher = $state<Philosopher>();
+	let interactions = $state<Interaction[]>([]);
+	let philosopher = $state<Philosopher>();
+
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
 	let id = $derived(page.params.id);
 
+
 	onMount(async () => {
-			try {
-				loading = true;
-				error = null;
+		try {
+			loading = true;
+			error = null;
 
-				if (!id) {
-					error = 'Philosopher ID is required';
-					return;
-				}
-
-				philosopher = await philosopherApi.getById(id);
-
-				if (!philosopher) {
-					error = 'Philosopher not found';
-					return;
-				}
-			} catch (err) {
-				error = 'Failed to load philosophers';
-				console.error(err);
-			} finally {
-				loading = false;
+			if (!id) {
+				error = 'Philosopher ID is required';
+				return;
 			}
-		});
 
+			philosopher = await philosopherApi.getById(id);
+
+			if (!philosopher) {
+				error = 'Philosopher not found';
+				return;
+			}
+
+		} catch (err) {
+			error = 'Failed to load philosopher';
+			console.error('Page load error:', err);
+		} finally {
+			loading = false;
+		}
+
+		try {
+			if (!id) {
+				error = 'Philosopher ID is required';
+				return;
+			}
+			
+			interactions = await interactionApi.get(id);
+		} catch (err) {
+			error = 'Failed to load interactions';
+			console.error('Page load error:', err);
+		} finally {
+			loading = false;
+		}
+	});
 </script>
+
 
 <svelte:head>
 	{#if philosopher}
@@ -180,13 +200,21 @@
 								View All Philosophers
 							</a>
 							<a 
-								href="/philosopher/add"
+								href="/philosophers/add"
 								class="flex-1 border border-gray-300 text-gray-700 text-center py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors"
 							>
 								Add New Philosopher
 							</a>
 						</div>
 					</div>
+
+
+					<!-- Comments Section -->
+					<Comments 
+						interactions={interactions} 
+						philosopherId={philosopher.id}
+					/>
+				
 				</div>
 			</div>
 		{/if}
