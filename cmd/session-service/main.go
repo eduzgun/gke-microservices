@@ -1,4 +1,3 @@
-// cmd/session-service/main.go
 package main
 
 import (

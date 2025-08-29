@@ -1,4 +1,3 @@
-// internal/interaction/interaction_controller.go
 package interaction
 
 import (

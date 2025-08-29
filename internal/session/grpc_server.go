@@ -1,4 +1,3 @@
-// internal/session/grpc_server.go
 package session
 
 import (
