@@ -88,5 +88,12 @@
 
 <!-- Click outside dropdown -->
 {#if showDropdown}
-  <div class="fixed inset-0 z-40" onclick={closeDropdown}></div>
+  <div 
+    class="fixed inset-0 z-40" 
+    onclick={closeDropdown}
+    onkeydown={(e) => e.key === 'Escape' && closeDropdown()}
+    role="button"
+    tabindex="0"
+    aria-label="Close dropdown"
+  ></div>
 {/if}

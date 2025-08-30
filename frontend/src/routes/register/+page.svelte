@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import { authApi } from '$lib/api/auth';
     import "../../app.css";
 
   let username = $state('');
@@ -21,8 +22,6 @@
   });
 
 
-    import { PUBLIC_GO_API_BASE } from '$env/static/public';
-    const API_BASE = PUBLIC_GO_API_BASE || 'http://localhost:8080';
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -31,23 +30,11 @@
     loading = true;
     error = null;
 
-
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
+        await authApi.register({ username, email, password });
         goto('/login');
-      } else {
-        error = data.message || 'Registration failed';
-      }
-    } catch (err) {
-      error = 'Network error. Please try again.';
+    } catch (err:any) {
+      error = err.message || 'Registration failed';
     } finally {
       loading = false;
     }
