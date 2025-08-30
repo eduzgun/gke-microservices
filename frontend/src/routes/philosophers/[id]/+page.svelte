@@ -34,7 +34,7 @@
 			}
 
 		} catch (err) {
-			error = 'Failed to load philosopher';
+			error = err instanceof Error ? err.message : 'Failed to load philosopher';
 			console.error('Page load error:', err);
 		} finally {
 			loading = false;
@@ -48,7 +48,7 @@
 			
 			interactions = await interactionApi.get(id);
 		} catch (err) {
-			error = 'Failed to load interactions';
+			error = err instanceof Error ? err.message : 'Failed to load interactions';
 			console.error('Page load error:', err);
 		} finally {
 			loading = false;

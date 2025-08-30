@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/eduzgun/gke-microservices/internal/models"
@@ -20,7 +19,6 @@ func AuthMiddleware(sessionClient *session.Client) func(http.Handler) http.Handl
 
 			valid, userID, err := sessionClient.ValidateSession(r.Context(), cookie.Value)
 			if err != nil || !valid {
-				log.Default().Println("this the middleware erorr", err)
 				http.SetCookie(w, &http.Cookie{
 					Name:   "session_id",
 					Value:  "",

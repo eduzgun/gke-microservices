@@ -15,7 +15,7 @@
 			philosophers = await philosopherApi.getAll();
 		} catch (err) {
 			// Use the actual error message instead of hardcoding
-			error = err instanceof Error ? err.message : 'An unknown error occurred';
+			error = err instanceof Error ? err.message : 'Failed to load philosophers';
 			console.error('Load philosophers error:', err);
 		} finally {
 			loading = false;
