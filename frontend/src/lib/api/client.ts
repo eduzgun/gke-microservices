@@ -1,6 +1,21 @@
-import { PUBLIC_GO_API_BASE } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
-const API_BASE = PUBLIC_GO_API_BASE || 'http://localhost:8080';
+const getApiBase = (): string => {
+  // Use explicit env var if provided (from ConfigMap in production)
+  if (env.PUBLIC_GO_API_BASE) {
+    return env.PUBLIC_GO_API_BASE;
+  }
+  
+  // Development fallback
+  if (env.PUBLIC_ENVIRONMENT == "dev") {
+    return 'http://localhost:8080';
+  }
+  
+  throw new Error('API_BASE not configured. Check your environment variables.');
+};
+
+const API_BASE = getApiBase();
+console.log("This is backend URL", API_BASE)
 
 export const apiClient = {
   async get<T>(url: string, { fetch: customFetch }: { fetch?: typeof globalThis.fetch } = {}): Promise<T> {
