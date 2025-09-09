@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o api-service ./cmd/session-service
+RUN CGO_ENABLED=0 GOOS=linux go build -o session-service ./cmd/session/main.go
 
 FROM alpine:latest
 

@@ -7,14 +7,14 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o api-service ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -o backend-service ./cmd/backend/main.go
 
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
-COPY --from=builder /app/api-service .
+COPY --from=builder /app/backend-service .
 
 EXPOSE 8080
-CMD ["./api-service"]
+CMD ["./backend-service"]
