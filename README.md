@@ -6,7 +6,9 @@ It includes:
     PostgreSQL with type-safe queries (SQLC) and managed migrations (Goose)
     Infrastructure-as-Code via Terraform (VPC, NAT, private GKE cluster, node pools)
     Kubernetes manifests + Gateway API for modern ingress routing
-     
+
+![Application Homepage](homepage.png)
+![Application Comment section](comment.png)
 ## Application Architecture
 Backend:
  - Golang with standard HTTP library
