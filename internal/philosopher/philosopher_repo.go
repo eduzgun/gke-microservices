@@ -1,0 +1,90 @@
+package philosopher
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/eduzgun/gke-microservices/internal/db"
+	"github.com/eduzgun/gke-microservices/internal/models"
+)
+
+type philosopherRepoImpl struct {
+	queries db.Querier
+}
+
+type PhilosopherRepo interface {
+	GetPhilosophers(ctx context.Context) ([]models.Philosopher, error)
+	CreatePhilosopher(ctx context.Context, philosopher models.Philosopher) (int, error)
+	GetPhilosopher(ctx context.Context, id int32) (models.Philosopher, error)
+}
+
+func NewPhilosopherRepo(queries db.Querier) PhilosopherRepo {
+	return &philosopherRepoImpl{
+		queries: queries,
+	}
+}
+
+func (pr *philosopherRepoImpl) GetPhilosophers(ctx context.Context) ([]models.Philosopher, error) {
+	dbPhilosophers, err := pr.queries.ListPhilosophers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("querier: listing philosophers: %w", err)
+	}
+
+	// These philosophers are of my own model in the repository and service layer
+	// We are decoupling storage to presentation this way
+	// We need to map the models
+	philosophers := make([]models.Philosopher, 0, len(dbPhilosophers))
+	for _, dbPhilo := range dbPhilosophers {
+		philosophers = append(philosophers, models.Philosopher{
+			ID:          int(dbPhilo.ID),
+			Name:        dbPhilo.Name,
+			DateBorn:    dbPhilo.DateBorn,
+			DateDied:    dbPhilo.DateDied,
+			Birthplace:  dbPhilo.Birthplace,
+			Interests:   dbPhilo.Interests,
+			PortraitURI: &dbPhilo.PortraitUri,
+			Bio:         dbPhilo.Bio,
+			CreatedAt:   dbPhilo.CreatedAt,
+		})
+	}
+
+	return philosophers, nil
+}
+
+func (pr *philosopherRepoImpl) CreatePhilosopher(ctx context.Context, phil models.Philosopher) (int, error) {
+	params := db.CreatePhilosopherParams{
+		Name:        phil.Name,
+		DateBorn:    phil.DateBorn,
+		DateDied:    phil.DateDied,
+		Birthplace:  phil.Birthplace,
+		Interests:   phil.Interests,
+		PortraitUri: *phil.PortraitURI,
+		Bio:         phil.Bio,
+	}
+
+	id, err := pr.queries.CreatePhilosopher(ctx, params)
+	if err != nil {
+		return 0, fmt.Errorf("querier: creating philosopher: %w", err)
+	}
+
+	return int(id), nil
+}
+
+func (pr *philosopherRepoImpl) GetPhilosopher(ctx context.Context, id int32) (models.Philosopher, error) {
+	dbPhilo, err := pr.queries.GetPhilosopher(ctx, id)
+	if err != nil {
+		return models.Philosopher{}, err
+	}
+
+	return models.Philosopher{
+		ID:          int(dbPhilo.ID),
+		Name:        dbPhilo.Name,
+		DateBorn:    dbPhilo.DateBorn,
+		DateDied:    dbPhilo.DateDied,
+		Birthplace:  dbPhilo.Birthplace,
+		Interests:   dbPhilo.Interests,
+		PortraitURI: &dbPhilo.PortraitUri,
+		Bio:         dbPhilo.Bio,
+		CreatedAt:   dbPhilo.CreatedAt,
+	}, nil
+}

@@ -1,0 +1,33 @@
+# k8s/migrate-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migratev2
+  namespace: default
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 0
+
+  template:
+    metadata:
+      labels:
+        app: backend
+        role: migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ${MIGRATE_IMAGE_URL}
+          args:
+            - "-dir"
+            - "/migrations"
+            - "up"
+          env:
+            - name: GOOSE_DRIVER
+              value: "postgres"
+            - name: GOOSE_DBSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: goose_string

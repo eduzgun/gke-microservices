@@ -1,0 +1,11 @@
+FROM golang:1.25-alpine AS builder
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+WORKDIR /app
+COPY internal/db/migrations ./internal/db/migrations
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /migrations
+COPY --from=builder /go/bin/goose .
+COPY --from=builder /app/internal/db/migrations ./
+ENTRYPOINT ["./goose"]

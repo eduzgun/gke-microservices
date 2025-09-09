@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session
+  labels:
+    app: session
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: session
+  template:
+    metadata:
+      labels:
+        app: session
+    spec:
+      containers:
+      - name: session
+        image: ${SESSION_IMAGE_URL}
+        ports:
+        - containerPort: 9090
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+        env:
+        - name: SESSION_SERVICE_ADDR
+          value: "0.0.0.0:9090"  # Override to bind to all interfaces
+        - name: PSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: pg_user
+        - name: PSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: pg_password
+        - name: PSQL_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db_name

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  labels:
+    app: philosopher
+data:
+  PSQL_HOST: "postgres-service"         
+  PSQL_PORT: "5432"
+  PSQL_NAME: "gke_microservices"
+  PSQL_SSL_MODE: "disable"
+
+  ENVIRONMENT: "prod"
+  API_PORT: "8080"
+  SESSION_SERVICE_ADDR: "session-service:9090"
+
+  GOOSE_DRIVER: "postgres"
+  GOOSE_MIGRATION_DIR: "/migrations"  
+
+  PUBLIC_ENVIRONMENT: "prod"
+  PUBLIC_GO_API_BASE: "${PUBLIC_GO_API_BASE}"    # Will be substituted
+  CORS_ORIGINS: "${CORS_ORIGINS}" 
