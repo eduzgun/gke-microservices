@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: ${BACKEND_IMAGE_URL}
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+        env:
+        - name: PSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: pg_user
+        - name: PSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: pg_password
+        - name: PSQL_NAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db_name
+        - name: CORS_ORIGINS
+          value: ${CORS_ORIGINS}
