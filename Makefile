@@ -53,7 +53,7 @@ dev: proto-gen
 	@echo "Starting backend, session, and frontend..."
 	cd frontend && npm run dev & go run cmd/backend/main.go & go run cmd/session/main.go & wait
 
-deploy-infra:
+deploy-k8s:
 	./deploy.template.sh
 
 # Destroy EVERYTHING: K8s, images, Terraform
