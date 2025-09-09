@@ -34,18 +34,19 @@ func main() {
 	grpcServer := grpc.NewServer()
 	pb.RegisterSessionServiceServer(grpcServer, server)
 
-	addr := os.Getenv("SESSION_SERVICE_ADDR")
-	if addr == "" {
-		addr = ":9090" // default to localhost:9090
+	sessionServiceAddr := os.Getenv("SESSION_SERVICE_ADDR")
+	if sessionServiceAddr == "" {
+		log.Error("Missing SESSION_SERVICE_ADDR environment variable")
+		os.Exit(1)
 	}
 
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", sessionServiceAddr)
 	if err != nil {
 		log.Error("Failed to listen", "error", err)
 		os.Exit(1)
 	}
 
-	log.Info("Session gRPC server starting", "address", addr)
+	log.Info("Session gRPC server starting", "address", sessionServiceAddr)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Error("Server failed", "error", err)
 		os.Exit(1)

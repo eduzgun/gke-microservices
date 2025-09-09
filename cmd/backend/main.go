@@ -61,8 +61,9 @@ func main() {
 
 	// Connect to gRPC sesion service
 	sessionServiceAddr := os.Getenv("SESSION_SERVICE_ADDR")
-	if env == "DEV" {
-		sessionServiceAddr = "localhost:9090" // default for dev
+	if sessionServiceAddr == "" {
+		log.Error("Missing SESSION_SERVICE_ADDR environment variable")
+		os.Exit(1)
 	}
 
 	sessionClient, err := session.NewClient(sessionServiceAddr)
