@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/eduzgun/gke-microservices/internal/auth"
 	"github.com/eduzgun/gke-microservices/internal/interaction"
@@ -31,20 +32,17 @@ func (r *Router) RegisterPhilosopherRoutes(
 	ic interaction.InteractionController,
 	sessionClient *session.Client,
 ) {
-	protected := http.NewServeMux()
+	authMW := auth.AuthMiddleware(sessionClient)
 
-	// Philosopher routes
-	protected.HandleFunc("GET /philosophers/", pc.HandleGetPhilosophers)
-	protected.HandleFunc("GET /philosophers/{id}", pc.HandleGetPhilosopher)
-	protected.HandleFunc("POST /philosophers/add", pc.HandleCreatePhilosopher)
+	r.mux.Handle("GET /philosophers", authMW(http.HandlerFunc(pc.HandleGetPhilosophers)))
+	r.mux.Handle("GET /philosophers/", authMW(http.HandlerFunc(pc.HandleGetPhilosophers)))
+	r.mux.Handle("GET /philosophers/{id}", authMW(http.HandlerFunc(pc.HandleGetPhilosopher)))
+	r.mux.Handle("POST /philosophers/add", authMW(http.HandlerFunc(pc.HandleCreatePhilosopher)))
 
 	// Interaction routes
-	protected.HandleFunc("POST /philosophers/{id}/comments", ic.HandleCreateComment)
-	protected.HandleFunc("POST /philosophers/{id}/like", ic.HandleToggleLike)
-	protected.HandleFunc("GET /philosophers/{id}/interactions", ic.HandleGetInteractions)
-
-	r.mux.Handle("/philosophers", auth.AuthMiddleware(sessionClient)(protected))
-	r.mux.Handle("/philosophers/", auth.AuthMiddleware(sessionClient)(protected))
+	r.mux.Handle("POST /philosophers/{id}/comments", authMW(http.HandlerFunc(ic.HandleCreateComment)))
+	r.mux.Handle("POST /philosophers/{id}/like", authMW(http.HandlerFunc(ic.HandleToggleLike)))
+	r.mux.Handle("GET /philosophers/{id}/interactions", authMW(http.HandlerFunc(ic.HandleGetInteractions)))
 }
 
 func (r *Router) RegisterAuthRoutes(ac auth.AuthController, sessionClient *session.Client) {
@@ -52,10 +50,10 @@ func (r *Router) RegisterAuthRoutes(ac auth.AuthController, sessionClient *sessi
 	r.mux.HandleFunc("POST /auth/login", ac.Login)
 	r.mux.HandleFunc("POST /auth/register", ac.Register)
 
-	protected := auth.AuthMiddleware(sessionClient)
+	authMW := auth.AuthMiddleware(sessionClient)
 
-	r.mux.Handle("GET /auth/profile", protected(http.HandlerFunc(ac.Profile)))
-	r.mux.Handle("POST /auth/logout", protected(http.HandlerFunc(ac.Logout)))
+	r.mux.Handle("GET /auth/profile", authMW(http.HandlerFunc(ac.Profile)))
+	r.mux.Handle("POST /auth/logout", authMW(http.HandlerFunc(ac.Logout)))
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -64,22 +62,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func getCORSOrigins() []string {
-	env := os.Getenv("ENVIRONMENT")
-
-	switch env {
-	case "prod":
-		return []string{
-			"https://yourproductionapp.com",
-		}
-	default:
+	origins := os.Getenv("CORS_ORIGINS")
+	if origins == "" {
+		// Fallback for local dev
 		return []string{
 			"http://localhost:3000",
-			"http://localhost:5173", // Vite dev
-			"http://localhost:4173",
+			"http://localhost:5173",
 			"http://127.0.0.1:3000",
 			"http://127.0.0.1:5173",
 		}
 	}
+	return strings.Split(origins, ",")
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
